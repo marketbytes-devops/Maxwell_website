@@ -1,0 +1,118 @@
+"use client";
+
+import Link from "next/link";
+import Image from "next/image";
+import logoImage from "@/assets/logo/Artboard 1.webp";
+
+export default function Footer() {
+  return (
+    <footer className="w-full bg-white font-poppins pt-16 mt-16 border-t border-gray-50">
+      <div className="container mx-auto px-4 xl:px-[80px] max-w-[1728px]">
+        
+        {/* Top Section - Locations Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-3 border border-gray-200 mb-16">
+          <div className="p-8 border-b md:border-b-0 md:border-r border-gray-200">
+            <h3 className="text-[25px] font-medium text-[#0F172A] mb-2 font-poppins leading-[150%]">Kollam</h3>
+            <p className="text-[18px] font-normal font-poppins text-[#475569] leading-[150%]">
+              ST THOMAS SHOPPING COMPLEX, near Jawahar<br/>Balabhavan, Kadapakkada, Kollam, Kerala<br/>691001
+            </p>
+          </div>
+          <div className="p-8 border-b md:border-b-0 md:border-r border-gray-200">
+            <h3 className="text-[25px] font-medium text-[#0F172A] mb-2 font-poppins leading-[150%]">Trivandrum</h3>
+            <p className="text-[18px] font-normal font-poppins text-[#475569] leading-[150%]">
+              Aaliya Tower, New, Karakkamandapam, Nemom,<br/>Thiruvananthapuram, Kerala 695020
+            </p>
+          </div>
+          <div className="p-8">
+            <h3 className="text-[25px] font-medium text-[#0F172A] mb-2 font-poppins leading-[150%]">Kochi</h3>
+            <p className="text-[18px] font-normal font-poppins text-[#475569] leading-[150%]">
+              Velleparambil House<br/>Sastha Temple Road, Ernakulam - 682017, Kerala
+            </p>
+          </div>
+        </div>
+
+        {/* Middle Section - Links & Info */}
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-8 mb-16">
+          {/* Logo and Info */}
+          <div className="md:col-span-12 lg:col-span-4 pr-0 lg:pr-12">
+            <div className="mb-6">
+              <Link href="/">
+                <Image 
+                  src={logoImage} 
+                  alt="Maxsel Agencies Logo" 
+                  width={140} 
+                  height={63} 
+                  className="w-[140px] h-[63px] object-contain"
+                />
+              </Link>
+            </div>
+            <p className="text-[14px] text-[#475569] leading-[24px] mb-8 font-poppins">
+              Premium-grade commercial kitchen systems engineered for reliability, safety, and operational excellence. Over a decade of layout and equipment design.
+            </p>
+            <div className="flex gap-4">
+              {/* Social Icons */}
+              <a href="#" className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200 transition">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg>
+              </a>
+              <a href="#" className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200 transition">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
+              </a>
+              <a href="#" className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200 transition">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M22.54 6.42a2.78 2.78 0 0 0-1.94-2C18.88 4 12 4 12 4s-6.88 0-8.6.46a2.78 2.78 0 0 0-1.94 2A29 29 0 0 0 1 11.75a29 29 0 0 0 .46 5.33 2.78 2.78 0 0 0 1.94 2c1.72.46 8.6.46 8.6.46s6.88 0 8.6-.46a2.78 2.78 0 0 0 1.94-2 29 29 0 0 0 .46-5.33 29 29 0 0 0-.46-5.33z"></path><polygon points="9.75 15.02 15.5 11.75 9.75 8.48 9.75 15.02"></polygon></svg>
+              </a>
+              <a href="#" className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200 transition">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path><rect x="2" y="9" width="4" height="12"></rect><circle cx="4" cy="4" r="2"></circle></svg>
+              </a>
+            </div>
+          </div>
+
+          {/* Equipment Catalog */}
+          <div className="md:col-span-4 lg:col-span-2 lg:ml-8">
+            <h4 className="text-[16px] font-semibold text-[#0F172A] mb-6 font-poppins">Equipment Catalog</h4>
+            <ul className="space-y-4 text-[13px] text-[#475569] font-poppins font-medium">
+              <li><Link href="#" className="hover:text-red-600 transition">Cooking Ranges</Link></li>
+              <li><Link href="#" className="hover:text-red-600 transition">Combi Ovens</Link></li>
+              <li><Link href="#" className="hover:text-red-600 transition">Heavy Fryers</Link></li>
+              <li><Link href="#" className="hover:text-red-600 transition">Underbar Prep</Link></li>
+              <li><Link href="#" className="hover:text-red-600 transition">Industrial Dishwashers</Link></li>
+            </ul>
+          </div>
+
+          {/* Solutions */}
+          <div className="md:col-span-4 lg:col-span-2 lg:ml-8">
+            <h4 className="text-[16px] font-semibold text-[#0F172A] mb-6 font-poppins">Solutions</h4>
+            <ul className="space-y-4 text-[13px] text-[#475569] font-poppins font-medium">
+              <li><Link href="#" className="hover:text-red-600 transition">Hotels & Banquets</Link></li>
+              <li><Link href="#" className="hover:text-red-600 transition">Gourmet Restaurants</Link></li>
+              <li><Link href="#" className="hover:text-red-600 transition">Micro-breweries</Link></li>
+              <li><Link href="#" className="hover:text-red-600 transition">Quick Service Cafe</Link></li>
+              <li><Link href="#" className="hover:text-red-600 transition">Corporate Pantries</Link></li>
+            </ul>
+          </div>
+
+          {/* Corporate */}
+          <div className="md:col-span-4 lg:col-span-2 lg:ml-8">
+            <h4 className="text-[16px] font-semibold text-[#0F172A] mb-6 font-poppins">Corporate</h4>
+            <ul className="space-y-4 text-[13px] text-[#475569] font-poppins font-medium">
+              <li><Link href="#" className="hover:text-red-600 transition">About Our Brand</Link></li>
+              <li><Link href="#" className="hover:text-red-600 transition">Completed Projects</Link></li>
+              <li><Link href="#" className="hover:text-red-600 transition">Engineering Design Team</Link></li>
+              <li><Link href="#" className="hover:text-red-600 transition">Contact Showroom</Link></li>
+              <li><Link href="#" className="hover:text-red-600 transition">SLA Repair Request</Link></li>
+            </ul>
+          </div>
+        </div>
+
+        {/* Bottom Section */}
+        <div className="border-t border-gray-100 py-6 flex flex-col md:flex-row justify-between items-center text-[12px] text-[#64748B] font-poppins font-medium">
+          <p>© 2026 Maxsel agencies. All rights reserved.</p>
+          <div className="flex gap-6 mt-4 md:mt-0 text-[#475569]">
+            <Link href="#" className="hover:text-gray-900 transition">Privacy Policy</Link>
+            <Link href="#" className="hover:text-gray-900 transition">Terms of Use</Link>
+            <Link href="#" className="hover:text-gray-900 transition">Compliance certifications</Link>
+          </div>
+        </div>
+      </div>
+    </footer>
+  );
+}
