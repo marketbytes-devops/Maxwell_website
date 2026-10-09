@@ -5,15 +5,15 @@ export default function PremiumBrands() {
   const scrollRef = useRef(null);
   const [isHovered, setIsHovered] = useState(false);
 
-  // Assuming 7 sliced images derived from the certificate card.png
   const brands = [
-    "/images/brand_0.webp",
-    "/images/brand_1.webp",
-    "/images/brand_2.webp",
-    "/images/brand_3.webp",
-    "/images/brand_4.webp",
-    "/images/brand_5.webp",
-    "/images/brand_6.webp",
+    "/brands/1.webp",
+    "/brands/2.webp",
+    "/brands/3.webp",
+    "/brands/4.webp",
+    "/brands/5.webp",
+    "/brands/6.webp",
+    "/brands/7.webp",
+    "/brands/8.webp",
   ];
 
   // Duplicate brands to create a seamless infinite marquee effect

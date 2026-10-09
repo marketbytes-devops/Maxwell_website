@@ -1,8 +1,10 @@
 "use client";
-import { useRef } from "react";
+import { useRef, useState, useEffect } from "react";
 
 export default function ProductCategories() {
   const scrollRef = useRef(null);
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [isHovered, setIsHovered] = useState(false);
 
   const categories = [
     {
@@ -34,13 +36,52 @@ export default function ProductCategories() {
 
   const scrollLeftBtn = () => {
     if (scrollRef.current) {
-      scrollRef.current.scrollBy({ left: -350, behavior: 'smooth' });
+      scrollRef.current.scrollBy({ left: -391, behavior: 'smooth' }); // card width + gap
     }
   };
 
   const scrollRightBtn = () => {
     if (scrollRef.current) {
-      scrollRef.current.scrollBy({ left: 350, behavior: 'smooth' });
+      scrollRef.current.scrollBy({ left: 391, behavior: 'smooth' });
+    }
+  };
+
+  // Auto-play functionality
+  useEffect(() => {
+    if (isHovered) return;
+
+    const interval = setInterval(() => {
+      if (scrollRef.current) {
+        const childWidth = scrollRef.current.children[0]?.offsetWidth || 0;
+        const gap = 24;
+        let nextIndex = activeIndex + 1;
+        if (nextIndex >= categories.length) {
+          nextIndex = 0;
+        }
+        scrollRef.current.scrollTo({ left: nextIndex * (childWidth + gap), behavior: 'smooth' });
+      }
+    }, 3000); // Auto-scroll every 3 seconds
+
+    return () => clearInterval(interval);
+  }, [activeIndex, categories.length, isHovered]);
+
+  const handleScroll = () => {
+    if (scrollRef.current) {
+      const scrollPosition = scrollRef.current.scrollLeft;
+      const childWidth = scrollRef.current.children[0]?.offsetWidth || 0;
+      const gap = 24; // gap-6
+      if (childWidth > 0) {
+        const index = Math.round(scrollPosition / (childWidth + gap));
+        setActiveIndex(index);
+      }
+    }
+  };
+
+  const scrollToDot = (index) => {
+    if (scrollRef.current) {
+      const childWidth = scrollRef.current.children[0]?.offsetWidth || 0;
+      const gap = 24;
+      scrollRef.current.scrollTo({ left: index * (childWidth + gap), behavior: 'smooth' });
     }
   };
 
@@ -50,17 +91,17 @@ export default function ProductCategories() {
         {/* Header Row */}
         <div className="flex flex-col lg:flex-row lg:items-end justify-between mb-12 gap-6">
           <div className="flex flex-col gap-3">
-            <h2 className="text-[#0F172A] text-[42px] font-semibold leading-none">
+            <h2 className="text-[#0F172A] text-[28px] md:text-[42px] font-semibold leading-none">
               Our Product Categories
             </h2>
-            <p className="text-[#475569] text-[18px] font-normal leading-none mt-2">
+            <p className="text-[#475569] text-[16px] md:text-[18px] font-normal leading-none mt-2">
               Explore our wide range of world-class kitchen and food preparation equipment.
             </p>
           </div>
           
           {/* Controls: Arrows + Button */}
-          <div className="flex items-center gap-6">
-            <div className="flex items-center gap-[8px]">
+          <div className="flex flex-wrap items-center gap-4 lg:gap-6">
+            <div className="hidden lg:flex items-center gap-[8px]">
               <button 
                 onClick={scrollLeftBtn}
                 className="w-[48px] h-[48px] flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 transition text-gray-500 cursor-pointer"
@@ -75,7 +116,7 @@ export default function ProductCategories() {
               </button>
             </div>
             
-            <button className="bg-[#FBBF24] hover:bg-[#F59E0B] transition-colors text-[#0F172A] font-medium px-8 py-3 rounded-full h-[48px] flex items-center justify-center whitespace-nowrap">
+            <button className="bg-[#FBBF24] hover:bg-[#F59E0B] transition-colors text-[#0F172A] font-medium px-8 py-3 rounded-full h-[48px] flex items-center justify-center whitespace-nowrap w-full lg:w-auto">
               View all Product
             </button>
           </div>
@@ -84,13 +125,18 @@ export default function ProductCategories() {
         {/* Carousel Cards */}
         <div 
           ref={scrollRef}
-          className="flex overflow-x-auto gap-6 pb-6 scrollbar-hide"
+          onScroll={handleScroll}
+          onMouseEnter={() => setIsHovered(true)}
+          onMouseLeave={() => setIsHovered(false)}
+          onTouchStart={() => setIsHovered(true)}
+          onTouchEnd={() => setIsHovered(false)}
+          className="flex overflow-x-auto gap-6 pb-6 scrollbar-hide snap-x snap-mandatory before:m-auto after:m-auto"
           style={{ msOverflowStyle: 'none', scrollbarWidth: 'none' }}
         >
           {categories.map((cat, index) => (
             <div 
               key={index} 
-              className="flex-shrink-0 w-[367px] rounded-[16px] border border-gray-200 bg-white flex flex-col overflow-hidden transition-all hover:shadow-lg hover:border-gray-300"
+              className="flex-shrink-0 w-[85vw] sm:w-[367px] rounded-[16px] border border-gray-200 bg-white flex flex-col overflow-hidden transition-all hover:shadow-lg hover:border-gray-300 snap-center"
             >
               {/* Image Area */}
               <div className="w-full h-[200px] bg-gray-50 relative">
@@ -124,6 +170,20 @@ export default function ProductCategories() {
                 </div>
               </div>
             </div>
+          ))}
+        </div>
+
+        {/* Mobile Pagination Dots */}
+        <div className="flex lg:hidden items-center justify-center gap-2 mt-4">
+          {categories.map((_, index) => (
+            <button
+              key={index}
+              onClick={() => scrollToDot(index)}
+              className={`w-2.5 h-2.5 rounded-full transition-colors ${
+                activeIndex === index ? 'bg-[#E11D48]' : 'bg-gray-300'
+              }`}
+              aria-label={`Go to slide ${index + 1}`}
+            />
           ))}
         </div>
       </div>

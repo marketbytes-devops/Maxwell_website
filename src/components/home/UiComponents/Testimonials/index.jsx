@@ -45,13 +45,13 @@ export default function Testimonials() {
             >
               {/* Overlapping Quote Icon (Princess Sofia Font) */}
               <span 
-                className="absolute text-[#E11D48] bg-white px-2 select-none"
+                className="absolute text-[#E11D48] select-none opacity-100 z-0"
                 style={{ 
                   fontFamily: "'Princess Sofia', cursive", 
                   fontSize: '120px',
-                  lineHeight: '0',
-                  top: '0px',
-                  left: '24px',
+                  lineHeight: '3',
+                  bottom: '-40px',
+                  left: '16px',
                 }}
               >
                 “
