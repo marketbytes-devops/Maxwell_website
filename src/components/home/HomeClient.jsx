@@ -58,6 +58,7 @@ export default function HomeClient() {
         primaryButtonText="Explore Products"
         secondaryButtonText="Request a Quote"
         bgImage="/bannerimage.webp"
+        bgVideo="https://res.cloudinary.com/mbz958a7/video/upload/q_auto,f_auto/v1791791658/WhatsApp_Video_2026-10-12_at_12.03.25_PM.mp4"
         features={heroFeatures}
         stamp={{
           width: '300px',

@@ -1,6 +1,4 @@
 import React from "react";
-import Image from "next/image";
-import logoImage from "@/assets/logo/Artboard 1.webp";
 
 export default function AboutBrand() {
   return (
@@ -8,13 +6,21 @@ export default function AboutBrand() {
       <div className="container mx-auto px-4 xl:px-[80px] max-w-[1728px]">
         <div className="flex flex-col lg:flex-row items-center justify-between gap-[40px] xl:gap-[80px]">
           
-          {/* Left Side: Logo Box */}
-          <div className="w-full lg:w-[612px] h-[300px] md:h-[583px] border border-[#000000] rounded-[12px] flex items-center justify-center bg-white p-4">
-            <Image 
-              src={logoImage} 
-              alt="Maxsel Agencies Logo" 
-              className="w-[80%] max-w-[403px] h-auto object-contain"
-            />
+          {/* Left Side: Video Showcase */}
+          <div className="w-full lg:w-[612px] h-[320px] sm:h-[420px] md:h-[583px] rounded-[16px] overflow-hidden border border-gray-200 shadow-xl bg-black relative flex items-center justify-center">
+            <video
+              autoPlay
+              loop
+              muted
+              playsInline
+              preload="auto"
+              className="w-full h-full object-cover"
+            >
+              <source 
+                src="https://res.cloudinary.com/mbz958a7/video/upload/q_auto,f_auto/v1791791653/WhatsApp_Video_2026-10-12_at_12.12.25_PM.mp4" 
+                type="video/mp4" 
+              />
+            </video>
           </div>
 
           {/* Right Side: Text Content */}
