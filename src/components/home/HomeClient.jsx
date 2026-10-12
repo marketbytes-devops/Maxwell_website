@@ -60,27 +60,6 @@ export default function HomeClient() {
         bgImage="/bannerimage.webp"
         bgVideo="https://res.cloudinary.com/mbz958a7/video/upload/q_auto,f_auto/v1791791658/WhatsApp_Video_2026-10-12_at_12.03.25_PM.mp4"
         features={heroFeatures}
-        stamp={{
-          width: '300px',
-          height: '159px',
-          bottom: '120px',
-          right: '80px',
-          angle: '-19.01deg',
-          content: (
-            <div 
-              style={{
-                fontFamily: "'Handlee', cursive",
-                fontWeight: 400,
-                fontSize: '40px',
-                color: '#FFFFFF',
-                textAlign: 'center',
-                lineHeight: '110%'
-              }}
-            >
-              Built for<br/>Professional<br/>Performance
-            </div>
-          )
-        }}
       />
 
       {/* Modular Home Page Sections */}

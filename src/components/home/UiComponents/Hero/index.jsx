@@ -15,43 +15,45 @@ export default function HeroBanner({
   stamp
 }) {
   return (
-    <div className="w-full flex justify-center bg-gray-50 font-inter overflow-hidden">
-      <div 
-        className="w-full max-w-[1728px] h-auto min-h-[600px] md:min-h-[750px] pt-[60px] md:pt-[80px] px-4 md:px-[40px] xl:px-[80px] pb-10 md:pb-0 flex flex-col gap-[35px] bg-cover bg-center bg-no-repeat relative mt-0 overflow-hidden"
-        style={!bgVideo ? {
-          backgroundImage: `
-            linear-gradient(78.08deg, rgba(15, 23, 42, 0.69) 3.96%, rgba(0, 0, 0, 0) 97.47%),
-            linear-gradient(96.45deg, rgba(0, 0, 0, 0.43) 11.54%, rgba(0, 0, 0, 0) 74.95%),
-            url('${bgImage || "/banner.jpg"}') 
-          `
-        } : undefined}
-      >
-        {/* Background Video (if provided) */}
-        {bgVideo && (
-          <>
-            <video
-              autoPlay
-              loop
-              muted
-              playsInline
-              preload="auto"
-              poster={bgImage || "/bannerimage.webp"}
-              className="absolute inset-0 w-full h-full object-cover z-0 pointer-events-none"
-            >
-              <source src={bgVideo} type="video/mp4" />
-            </video>
-            {/* Gradient Overlay for Text Readability */}
-            <div 
-              className="absolute inset-0 z-[1] pointer-events-none"
-              style={{
-                background: `
-                  linear-gradient(78.08deg, rgba(15, 23, 42, 0.75) 3.96%, rgba(0, 0, 0, 0.3) 97.47%),
-                  linear-gradient(96.45deg, rgba(0, 0, 0, 0.5) 11.54%, rgba(0, 0, 0, 0.2) 74.95%)
-                `
-              }}
-            />
-          </>
-        )}
+    <div 
+      className="w-full min-h-[600px] md:min-h-[750px] bg-cover bg-center bg-no-repeat relative overflow-hidden font-inter flex flex-col justify-center"
+      style={!bgVideo ? {
+        backgroundImage: `
+          linear-gradient(78.08deg, rgba(15, 23, 42, 0.69) 3.96%, rgba(0, 0, 0, 0) 97.47%),
+          linear-gradient(96.45deg, rgba(0, 0, 0, 0.43) 11.54%, rgba(0, 0, 0, 0) 74.95%),
+          url('${bgImage || "/banner.jpg"}') 
+        `
+      } : undefined}
+    >
+      {/* Background Video (if provided) */}
+      {bgVideo && (
+        <>
+          <video
+            autoPlay
+            loop
+            muted
+            playsInline
+            preload="auto"
+            poster={bgImage || "/bannerimage.webp"}
+            className="absolute inset-0 w-full h-full object-cover z-0 pointer-events-none"
+          >
+            <source src={bgVideo} type="video/mp4" />
+          </video>
+          {/* Gradient Overlay for Text Readability */}
+          <div 
+            className="absolute inset-0 z-[1] pointer-events-none"
+            style={{
+              background: `
+                linear-gradient(78.08deg, rgba(15, 23, 42, 0.75) 3.96%, rgba(0, 0, 0, 0.3) 97.47%),
+                linear-gradient(96.45deg, rgba(0, 0, 0, 0.5) 11.54%, rgba(0, 0, 0, 0.2) 74.95%)
+              `
+            }}
+          />
+        </>
+      )}
+
+      {/* Inner Content Container */}
+      <div className="w-full max-w-[1728px] mx-auto px-4 md:px-[40px] xl:px-[80px] pt-[60px] md:pt-[80px] pb-10 md:pb-12 flex flex-col gap-[35px] relative z-10">
         {/* Main Text Container */}
         <motion.div
           initial={{ opacity: 0, x: -50 }}
