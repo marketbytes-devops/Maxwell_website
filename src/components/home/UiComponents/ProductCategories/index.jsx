@@ -1,10 +1,9 @@
 "use client";
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState } from "react";
 
 export default function ProductCategories() {
   const scrollRef = useRef(null);
   const [activeIndex, setActiveIndex] = useState(0);
-  const [isHovered, setIsHovered] = useState(false);
 
   const categories = [
     {
@@ -36,34 +35,29 @@ export default function ProductCategories() {
 
   const scrollLeftBtn = () => {
     if (scrollRef.current) {
-      scrollRef.current.scrollBy({ left: -391, behavior: 'smooth' }); // card width + gap
+      const container = scrollRef.current;
+      const child = container.children[0];
+      const scrollAmount = child ? child.offsetWidth + 24 : 390;
+      if (container.scrollLeft <= 10) {
+        container.scrollTo({ left: container.scrollWidth, behavior: 'smooth' });
+      } else {
+        container.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
+      }
     }
   };
 
   const scrollRightBtn = () => {
     if (scrollRef.current) {
-      scrollRef.current.scrollBy({ left: 391, behavior: 'smooth' });
+      const container = scrollRef.current;
+      const child = container.children[0];
+      const scrollAmount = child ? child.offsetWidth + 24 : 390;
+      if (container.scrollLeft + container.clientWidth >= container.scrollWidth - 10) {
+        container.scrollTo({ left: 0, behavior: 'smooth' });
+      } else {
+        container.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+      }
     }
   };
-
-  // Auto-play functionality
-  useEffect(() => {
-    if (isHovered) return;
-
-    const interval = setInterval(() => {
-      if (scrollRef.current) {
-        const childWidth = scrollRef.current.children[0]?.offsetWidth || 0;
-        const gap = 24;
-        let nextIndex = activeIndex + 1;
-        if (nextIndex >= categories.length) {
-          nextIndex = 0;
-        }
-        scrollRef.current.scrollTo({ left: nextIndex * (childWidth + gap), behavior: 'smooth' });
-      }
-    }, 3000); // Auto-scroll every 3 seconds
-
-    return () => clearInterval(interval);
-  }, [activeIndex, categories.length, isHovered]);
 
   const handleScroll = () => {
     if (scrollRef.current) {
@@ -101,22 +95,24 @@ export default function ProductCategories() {
           
           {/* Controls: Arrows + Button */}
           <div className="flex flex-wrap items-center gap-4 lg:gap-6">
-            <div className="hidden lg:flex items-center gap-[8px]">
+            <div className="flex items-center gap-[8px]">
               <button 
                 onClick={scrollLeftBtn}
+                aria-label="Previous category"
                 className="w-[48px] h-[48px] flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 transition text-gray-500 cursor-pointer"
               >
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
               </button>
               <button 
                 onClick={scrollRightBtn}
+                aria-label="Next category"
                 className="w-[48px] h-[48px] flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 transition text-gray-500 cursor-pointer"
               >
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
               </button>
             </div>
             
-            <button className="bg-[#FBBF24] hover:bg-[#F59E0B] transition-colors text-[#0F172A] font-medium px-8 py-3 rounded-full h-[48px] flex items-center justify-center whitespace-nowrap w-full lg:w-auto">
+            <button className="bg-[#FBBF24] hover:bg-[#F59E0B] transition-colors text-[#0F172A] font-medium px-8 py-3 rounded-full h-[48px] flex items-center justify-center whitespace-nowrap w-full sm:w-auto">
               View all Product
             </button>
           </div>
@@ -126,17 +122,13 @@ export default function ProductCategories() {
         <div 
           ref={scrollRef}
           onScroll={handleScroll}
-          onMouseEnter={() => setIsHovered(true)}
-          onMouseLeave={() => setIsHovered(false)}
-          onTouchStart={() => setIsHovered(true)}
-          onTouchEnd={() => setIsHovered(false)}
           className="flex overflow-x-auto gap-6 pb-6 scrollbar-hide snap-x snap-mandatory before:m-auto after:m-auto"
           style={{ msOverflowStyle: 'none', scrollbarWidth: 'none' }}
         >
           {categories.map((cat, index) => (
             <div 
               key={index} 
-              className="flex-shrink-0 w-[85vw] sm:w-[367px] rounded-[16px] border border-gray-200 bg-white flex flex-col overflow-hidden transition-all hover:shadow-lg hover:border-gray-300 snap-center"
+              className="flex-shrink-0 w-[85vw] sm:w-[calc(50%-12px)] lg:w-[calc((100%-72px)/4)] rounded-[16px] border border-gray-200 bg-white flex flex-col overflow-hidden transition-all hover:shadow-lg hover:border-gray-300 snap-start"
             >
               {/* Image Area */}
               <div className="w-full h-[200px] bg-gray-50 relative">

@@ -1,9 +1,8 @@
 "use client";
-import React, { useRef, useEffect, useState } from "react";
+import React, { useRef } from "react";
 
 export default function ProjectsAndWork() {
   const scrollRef = useRef(null);
-  const [isHovered, setIsHovered] = useState(false);
 
   const projects = [
     {
@@ -29,31 +28,58 @@ export default function ProjectsAndWork() {
       title: "Bite-Sized Cloud Kitchens",
       location: "Delhi",
       image: "/projects/card4.webp"
+    },
+    {
+      tag: "Fine Dining",
+      title: "Azure Coastal Bistro",
+      location: "Goa",
+      image: "/projects/card1.webp"
+    },
+    {
+      tag: "Banquet Hall",
+      title: "Imperial Crown Regency",
+      location: "Hyderabad",
+      image: "/projects/card2.webp"
+    },
+    {
+      tag: "Patisserie",
+      title: "Artisanal Crust Lab",
+      location: "Chennai",
+      image: "/projects/card3.webp"
+    },
+    {
+      tag: "QSR Chain",
+      title: "Urban Express Kitchens",
+      location: "Kolkata",
+      image: "/projects/card4.webp"
     }
   ];
 
-  // Duplicate the array to create a seamless infinite marquee effect
-  const displayProjects = [...projects, ...projects, ...projects];
-
-  useEffect(() => {
-    let animationFrameId;
-    const scrollContainer = scrollRef.current;
-
-    const scroll = () => {
-      if (scrollContainer && !isHovered) {
-        scrollContainer.scrollLeft += 1; // Marquee speed
-        
-        // When we have scrolled exactly the length of the original list, instantly snap back
-        if (scrollContainer.scrollLeft >= scrollContainer.scrollWidth / 3) {
-          scrollContainer.scrollLeft = 0;
-        }
+  const scrollLeftBtn = () => {
+    if (scrollRef.current) {
+      const container = scrollRef.current;
+      const child = container.children[0];
+      const scrollAmount = child ? child.offsetWidth + 24 : 390;
+      if (container.scrollLeft <= 10) {
+        container.scrollTo({ left: container.scrollWidth, behavior: "smooth" });
+      } else {
+        container.scrollBy({ left: -scrollAmount, behavior: "smooth" });
       }
-      animationFrameId = requestAnimationFrame(scroll);
-    };
+    }
+  };
 
-    animationFrameId = requestAnimationFrame(scroll);
-    return () => cancelAnimationFrame(animationFrameId);
-  }, [isHovered]);
+  const scrollRightBtn = () => {
+    if (scrollRef.current) {
+      const container = scrollRef.current;
+      const child = container.children[0];
+      const scrollAmount = child ? child.offsetWidth + 24 : 390;
+      if (container.scrollLeft + container.clientWidth >= container.scrollWidth - 10) {
+        container.scrollTo({ left: 0, behavior: "smooth" });
+      } else {
+        container.scrollBy({ left: scrollAmount, behavior: "smooth" });
+      }
+    }
+  };
 
   return (
     <section className="w-full py-20 bg-white font-poppins">
@@ -62,32 +88,53 @@ export default function ProjectsAndWork() {
         {/* Header Row */}
         <div className="flex flex-col lg:flex-row lg:items-end justify-between mb-[50px] gap-6">
           <div className="flex flex-col gap-3">
-            <h2 className="text-[#0F172A] text-[42px] font-semibold leading-none">
+            <h2 className="text-[#0F172A] text-[28px] md:text-[42px] font-semibold leading-none">
               Our Projects & Completed Work
             </h2>
-            <p className="text-[#475569] text-[18px] font-normal leading-none mt-2">
+            <p className="text-[#475569] text-[16px] md:text-[18px] font-normal leading-none mt-2">
               See how we empower the top commercial food services across metropolitan areas.
             </p>
           </div>
           
-          {/* Top Right Button */}
-          <button className="w-[278px] h-[58px] bg-[#FBBF24] hover:bg-[#F59E0B] transition-colors text-[#0F172A] font-medium text-[16px] rounded-[60px] flex items-center justify-center flex-shrink-0">
-            View Project Gallery
-          </button>
+          {/* Controls: Arrows + Button */}
+          <div className="flex flex-wrap items-center gap-4 lg:gap-6">
+            <div className="flex items-center gap-[8px]">
+              <button 
+                onClick={scrollLeftBtn}
+                aria-label="Previous projects"
+                className="w-[48px] h-[48px] flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 transition text-gray-500 cursor-pointer"
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="15 18 9 12 15 6"></polyline>
+                </svg>
+              </button>
+              <button 
+                onClick={scrollRightBtn}
+                aria-label="Next projects"
+                className="w-[48px] h-[48px] flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 transition text-gray-500 cursor-pointer"
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="9 18 15 12 9 6"></polyline>
+                </svg>
+              </button>
+            </div>
+
+            <button className="bg-[#FBBF24] hover:bg-[#F59E0B] transition-colors text-[#0F172A] font-medium px-8 py-3 rounded-full h-[48px] md:h-[58px] flex items-center justify-center whitespace-nowrap w-full sm:w-auto">
+              View Project Gallery
+            </button>
+          </div>
         </div>
 
-        {/* Cards Row (Marquee) */}
+        {/* Cards Row (4 cards at a time on desktop) */}
         <div 
           ref={scrollRef}
-          onMouseEnter={() => setIsHovered(true)}
-          onMouseLeave={() => setIsHovered(false)}
-          className="flex overflow-x-auto gap-[24px] pb-6 w-full scrollbar-hide before:m-auto after:m-auto" 
-          style={{ msOverflowStyle: 'none', scrollbarWidth: 'none' }}
+          className="flex overflow-x-auto gap-6 pb-6 w-full scrollbar-hide snap-x snap-mandatory" 
+          style={{ msOverflowStyle: "none", scrollbarWidth: "none" }}
         >
-          {displayProjects.map((item, index) => (
+          {projects.map((item, index) => (
             <div 
               key={index} 
-              className="relative flex-shrink-0 w-[374px] h-[400px] rounded-[16px] overflow-hidden group cursor-pointer"
+              className="relative flex-shrink-0 w-[85vw] sm:w-[calc(50%-12px)] lg:w-[calc((100%-72px)/4)] h-[400px] rounded-[16px] overflow-hidden group cursor-pointer snap-start"
             >
               {/* Background Image */}
               <img 

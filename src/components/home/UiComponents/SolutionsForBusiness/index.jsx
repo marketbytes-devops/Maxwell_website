@@ -1,9 +1,8 @@
 "use client";
-import React, { useRef, useEffect, useState } from "react";
+import React, { useRef } from "react";
 
 export default function SolutionsForBusiness() {
   const scrollRef = useRef(null);
-  const [isHovered, setIsHovered] = useState(false);
 
   const solutions = [
     {
@@ -21,64 +20,108 @@ export default function SolutionsForBusiness() {
     {
       title: "High-Volume Bakeries",
       image: "/solutions/card4.webp"
+    },
+    {
+      title: "Cloud & Ghost Kitchens",
+      image: "/solutions/card1.webp"
+    },
+    {
+      title: "Institutional Catering",
+      image: "/solutions/card2.webp"
+    },
+    {
+      title: "Bars & Microbreweries",
+      image: "/solutions/card3.webp"
+    },
+    {
+      title: "Supermarkets & Delis",
+      image: "/solutions/card4.webp"
     }
   ];
 
-  // Duplicate the array 3 times for a seamless infinite scroll effect
-  const displaySolutions = [...solutions, ...solutions, ...solutions];
-
-  useEffect(() => {
-    let animationFrameId;
-    const scrollContainer = scrollRef.current;
-
-    const scroll = () => {
-      if (scrollContainer && !isHovered) {
-        scrollContainer.scrollLeft += 1; // Marquee speed
-        
-        // When we have scrolled exactly the length of the original list, instantly snap back
-        if (scrollContainer.scrollLeft >= scrollContainer.scrollWidth / 3) {
-          scrollContainer.scrollLeft = 0;
-        }
+  const scrollLeftBtn = () => {
+    if (scrollRef.current) {
+      const container = scrollRef.current;
+      const child = container.children[0];
+      const scrollAmount = child ? child.offsetWidth + 24 : 390;
+      if (container.scrollLeft <= 10) {
+        container.scrollTo({ left: container.scrollWidth, behavior: "smooth" });
+      } else {
+        container.scrollBy({ left: -scrollAmount, behavior: "smooth" });
       }
-      animationFrameId = requestAnimationFrame(scroll);
-    };
+    }
+  };
 
-    animationFrameId = requestAnimationFrame(scroll);
-    return () => cancelAnimationFrame(animationFrameId);
-  }, [isHovered]);
+  const scrollRightBtn = () => {
+    if (scrollRef.current) {
+      const container = scrollRef.current;
+      const child = container.children[0];
+      const scrollAmount = child ? child.offsetWidth + 24 : 390;
+      if (container.scrollLeft + container.clientWidth >= container.scrollWidth - 10) {
+        container.scrollTo({ left: 0, behavior: "smooth" });
+      } else {
+        container.scrollBy({ left: scrollAmount, behavior: "smooth" });
+      }
+    }
+  };
 
   return (
     <section className="w-full py-20 bg-white font-poppins">
       <div className="container mx-auto px-4 xl:px-[80px] max-w-[1728px]">
         
-        {/* Header Section */}
-        <div className="flex flex-col items-center mb-[50px]">
-          <h2 className="font-poppins font-semibold text-[42px] leading-none text-[#0F172A] text-center mb-[16px]">
-            Solutions for Your Business
-          </h2>
-          <p className="font-poppins font-normal text-[18px] leading-[150%] text-[#475569] text-center">
-            We don't just sell products — we deliver fully integrated culinary spaces optimized for your business model.
-          </p>
+        {/* Header Row */}
+        <div className="flex flex-col lg:flex-row lg:items-end justify-between mb-[50px] gap-6">
+          <div className="flex flex-col gap-3 max-w-[850px]">
+            <h2 className="font-poppins font-semibold text-[28px] md:text-[42px] leading-tight text-[#0F172A]">
+              Solutions for Your Business
+            </h2>
+            <p className="font-poppins font-normal text-[16px] md:text-[18px] leading-[150%] text-[#475569]">
+              We don't just sell products — we deliver fully integrated culinary spaces optimized for your business model.
+            </p>
+          </div>
+
+          {/* Controls: Arrows */}
+          <div className="flex items-center gap-[8px] flex-shrink-0">
+            <button 
+              onClick={scrollLeftBtn}
+              aria-label="Previous solutions"
+              className="w-[48px] h-[48px] flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 transition text-gray-500 cursor-pointer"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="15 18 9 12 15 6"></polyline>
+              </svg>
+            </button>
+            <button 
+              onClick={scrollRightBtn}
+              aria-label="Next solutions"
+              className="w-[48px] h-[48px] flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 transition text-gray-500 cursor-pointer"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="9 18 15 12 9 6"></polyline>
+              </svg>
+            </button>
+          </div>
         </div>
 
-        {/* Cards Row (Marquee) */}
+        {/* Cards Row (4 cards at a time on desktop) */}
         <div 
           ref={scrollRef}
-          onMouseEnter={() => setIsHovered(true)}
-          onMouseLeave={() => setIsHovered(false)}
-          className="flex overflow-x-auto gap-6 pb-6 w-full scrollbar-hide before:m-auto after:m-auto" 
-          style={{ msOverflowStyle: 'none', scrollbarWidth: 'none' }}
+          className="flex overflow-x-auto gap-6 pb-6 w-full scrollbar-hide snap-x snap-mandatory" 
+          style={{ msOverflowStyle: "none", scrollbarWidth: "none" }}
         >
-          {displaySolutions.map((item, index) => (
+          {solutions.map((item, index) => (
             <div 
               key={index} 
-              className="relative flex-shrink-0 w-[365.75px] h-[320px] rounded-[16px] overflow-hidden group cursor-pointer"
+              className="relative flex-shrink-0 w-[85vw] sm:w-[calc(50%-12px)] lg:w-[calc((100%-72px)/4)] h-[320px] rounded-[16px] overflow-hidden group cursor-pointer snap-start"
             >
               {/* Background Image */}
               <img 
                 src={item.image} 
                 alt={item.title} 
                 className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                onError={(e) => {
+                  e.currentTarget.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100%25' height='100%25'%3E%3Crect width='100%25' height='100%25' fill='%23f8fafc'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='14px' fill='%2394a3b8'%3E" + encodeURIComponent(item.title) + "%3C/text%3E%3C/svg%3E";
+                }}
               />
               
               {/* Gradient Overlay for Text Readability */}
