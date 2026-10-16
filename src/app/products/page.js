@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import Image from "next/image";
 
 // Default categories exactly matching Figma design Screenshot 1
 const DESIGN_CATEGORIES = [
@@ -28,15 +27,45 @@ const PRICE_RANGES = [
   { id: "250-350", label: "250$ – 350$", min: 250, max: 350 },
 ];
 
-// Fallback dummy products matching Figma Screenshot 2
+// Fallback products with 3 distinct, high-quality images from src/assets/products
 const FALLBACK_PRODUCTS = [
   {
     id: 1,
+    name: "Back Bar",
+    model_no: "BB-3D-GLS",
+    brand: "Maxsel",
+    category_name: "Back Bar",
+    image_url: "/products/back_bar_product.png",
+    price: 340,
+    specifications: [
+      { spec_key: "External Dimension (mm)", spec_value: "1350 x 520 x 900" },
+      { spec_key: "Gross Volume", spec_value: "330 L" },
+      { spec_key: "Temperature Range", spec_value: "0°C ~ 10°C" },
+      { spec_key: "Doors", spec_value: "Double Glazed Hinged Doors" },
+    ],
+  },
+  {
+    id: 2,
+    name: "Coffee grinder",
+    model_no: "CG-500-ESP",
+    brand: "Maxsel",
+    category_name: "Preparation Table",
+    image_url: "/products/mixer_product.png",
+    price: 120,
+    specifications: [
+      { spec_key: "Capacity", spec_value: "10 Litres" },
+      { spec_key: "Motor Power", spec_value: "450 W" },
+      { spec_key: "Speed Range", spec_value: "130 - 900 RPM" },
+      { spec_key: "Transmission", spec_value: "Direct Gear Driven" },
+    ],
+  },
+  {
+    id: 3,
     name: "Velvet Covvered",
     model_no: "VC-880-BLK",
     brand: "Maxsel",
     category_name: "Pastry Cabinet",
-    image_url: "/products/velvet_covered.png",
+    image_url: "/products/velvet_covered_clean.png",
     price: 280,
     specifications: [
       { spec_key: "External Dimension (mm)", spec_value: "900 x 750 x 1200" },
@@ -46,33 +75,48 @@ const FALLBACK_PRODUCTS = [
     ],
   },
   {
-    id: 2,
-    name: "Coffee grinder",
-    model_no: "CG-500-ESP",
+    id: 4,
+    name: "Commercial Range",
+    model_no: "CR-6B-OVEN",
     brand: "Maxsel",
-    category_name: "Preparation Table",
-    image_url: "/products/coffee_grinder.png",
-    price: 120,
+    category_name: "Supermarket Range",
+    image_url: "/products/range_product.png",
+    price: 320,
     specifications: [
-      { spec_key: "Hopper Capacity", spec_value: "1.2 kg" },
-      { spec_key: "Burr Diameter", spec_value: "64 mm flat" },
-      { spec_key: "Motor Power", spec_value: "350 W" },
-      { spec_key: "Speed", spec_value: "1400 RPM" },
+      { spec_key: "Burners", spec_value: "6 Heavy-Duty Cast Iron" },
+      { spec_key: "Oven Capacity", spec_value: "GN 2/1 Standard" },
+      { spec_key: "Gas Consumption", spec_value: "36 kW" },
+      { spec_key: "Construction", spec_value: "AISI 304 Stainless Steel" },
     ],
   },
   {
-    id: 3,
-    name: "Back Bar",
-    model_no: "BB-3D-GLS",
+    id: 5,
+    name: "Combi Bakery Oven",
+    model_no: "BO-TOUCH-10",
     brand: "Maxsel",
-    category_name: "Back Bar",
-    image_url: "/products/back_bar.png",
-    price: 340,
+    category_name: "Pastry Cabinet",
+    image_url: "/products/bakery_oven_product.png",
+    price: 350,
     specifications: [
-      { spec_key: "External Dimension (mm)", spec_value: "1350 x 520 x 900" },
-      { spec_key: "Gross Volume", spec_value: "330 L" },
-      { spec_key: "Temperature Range", spec_value: "0°C ~ 10°C" },
-      { spec_key: "Doors", spec_value: "3 Double Glazed Hinged Doors" },
+      { spec_key: "Trays Capacity", spec_value: "10 Trays (600x400 mm)" },
+      { spec_key: "Control", spec_value: "Touchscreen Digital Display" },
+      { spec_key: "Temperature Range", spec_value: "30°C ~ 260°C" },
+      { spec_key: "Steam Generation", spec_value: "Direct Injection" },
+    ],
+  },
+  {
+    id: 6,
+    name: "Commercial Dishwasher",
+    model_no: "DW-HOOD-120",
+    brand: "Maxsel",
+    category_name: "Dishwasher",
+    image_url: "/products/dishwash.png",
+    price: 290,
+    specifications: [
+      { spec_key: "Rack Size", spec_value: "500 x 500 mm" },
+      { spec_key: "Washing Cycle", spec_value: "60 / 90 / 120 sec" },
+      { spec_key: "Boiler Capacity", spec_value: "7 Litres" },
+      { spec_key: "Total Power", spec_value: "6.8 kW" },
     ],
   },
 ];
@@ -172,7 +216,7 @@ export default function ProductsPage() {
 
   // Filtered & Sorted Products
   const filteredProducts = useMemo(() => {
-    return products.filter((prod) => {
+    const result = products.filter((prod) => {
       // Category filter
       if (
         activeCategory !== "All" &&
@@ -206,7 +250,16 @@ export default function ProductsPage() {
 
       return true;
     });
-  }, [products, activeCategory, searchQuery, selectedPrices]);
+
+    // Sorting
+    if (sortBy === "name-asc") {
+      result.sort((a, b) => a.name.localeCompare(b.name));
+    } else if (sortBy === "name-desc") {
+      result.sort((a, b) => b.name.localeCompare(a.name));
+    }
+
+    return result;
+  }, [products, activeCategory, searchQuery, selectedPrices, sortBy]);
 
   return (
     <div className="w-full bg-white flex flex-col min-h-screen">
@@ -389,7 +442,7 @@ export default function ProductsPage() {
                         {cat.name}
                       </span>
 
-                      {/* Chevron Arrow (Down or Right based on Figma screenshot) */}
+                      {/* Chevron Arrow */}
                       <span
                         className={`text-gray-400 group-hover:text-[#04940B] transition-transform ${
                           isActive ? "text-[#04940B]" : ""
@@ -495,7 +548,7 @@ export default function ProductsPage() {
                 )}
               </div>
 
-              {/* Filter & Sort Icon / Control matching Figma screenshot */}
+              {/* Filter & Sort Control */}
               <div className="flex items-center gap-2">
                 <span className="text-xs uppercase font-bold tracking-wider text-gray-700 hidden sm:inline">
                   Filter & Sort
@@ -544,12 +597,12 @@ export default function ProductsPage() {
                   /* ========================================================= */
                   <div
                     key={product.id}
-                    className="w-full max-w-[389px] h-[499px] bg-[#FFFFFF] rounded-[12px] border border-[#BBBBBB] p-4 flex flex-col justify-between relative shadow-xs hover:shadow-md transition-all duration-300"
+                    className="w-full max-w-[389px] h-[499px] bg-[#FFFFFF] rounded-[12px] border border-[#BBBBBB] p-4 sm:p-5 flex flex-col justify-between relative shadow-xs hover:shadow-lg transition-all duration-300 overflow-hidden"
                   >
                     {/* Top-Right Capsule Pill: Wishlist Pill with Divider and Heart */}
-                    <div className="absolute top-4 right-4 z-10 flex items-center h-[34px] px-3 rounded-full border border-gray-200 bg-white shadow-2xs">
+                    <div className="absolute top-4 right-4 z-10 flex items-center h-[32px] px-2.5 rounded-full border border-gray-200 bg-white/95 backdrop-blur-xs shadow-2xs">
                       {/* Vertical line divider inside pill */}
-                      <span className="w-[1px] h-3.5 bg-gray-200 mr-2.5"></span>
+                      <span className="w-[1px] h-3.5 bg-gray-200 mr-2"></span>
                       {/* Heart Icon */}
                       <button
                         type="button"
@@ -572,15 +625,15 @@ export default function ProductsPage() {
                       </button>
                     </div>
 
-                    {/* Product Image Area: width 355px, height 365px (fits inside card) */}
-                    <div className="w-full max-w-[355px] h-[330px] flex items-center justify-center mx-auto overflow-hidden mt-2">
+                    {/* Product Image Area: Clean centered product focus */}
+                    <div className="w-full h-[320px] flex items-center justify-center mx-auto overflow-hidden my-auto p-2">
                       {product.image_url ? (
                         <img
                           src={product.image_url}
                           alt={product.name}
-                          className="w-full h-full object-contain hover:scale-105 transition-transform duration-300"
+                          className="max-h-full max-w-full object-contain hover:scale-105 transition-transform duration-300 drop-shadow-xs"
                           onError={(e) => {
-                            e.currentTarget.src = "/products/velvet_covered.png";
+                            e.currentTarget.src = "/products/velvet_covered_clean.png";
                           }}
                         />
                       ) : (
@@ -595,11 +648,11 @@ export default function ProductsPage() {
                     </div>
 
                     {/* Product Name & Action Buttons Container */}
-                    <div className="w-full space-y-3">
+                    <div className="w-full space-y-3 pt-1">
                       {/* Product Name */}
-                      {/* Exact Specs: Roboto, weight 500, size 24px, line-height 100%, width: 229px, height: 38px */}
+                      {/* Exact Specs: Roboto, weight 500, size 24px, line-height 100% */}
                       <h3
-                        className="text-[24px] font-medium text-[#000000] truncate leading-[100%]"
+                        className="text-[22px] sm:text-[24px] font-medium text-[#000000] truncate leading-[100%]"
                         style={{
                           fontFamily: "'Roboto', sans-serif",
                           lineHeight: "100%",
@@ -610,13 +663,13 @@ export default function ProductsPage() {
                       </h3>
 
                       {/* Action Buttons Row */}
-                      {/* View details (203.92px, 42px, radius 60px, #04940B) + Add to Cart (149.78px, 42px, radius 60px, #000000) */}
-                      <div className="flex items-center justify-between gap-2 w-full pt-1">
+                      {/* Perfectly fitted inside card without any right overflow */}
+                      <div className="flex items-center gap-2.5 w-full pt-1">
                         {/* View details Button */}
                         <button
                           type="button"
                           onClick={() => setSelectedProduct(product)}
-                          className="w-[204px] h-[42px] rounded-[60px] bg-[#04940B] hover:bg-[#037A09] active:scale-[0.98] text-white text-[15px] font-medium flex items-center justify-center transition-all cursor-pointer shadow-xs flex-shrink-0"
+                          className="flex-[1.35] h-[42px] min-w-0 rounded-[60px] bg-[#04940B] hover:bg-[#037A09] active:scale-[0.98] text-white text-[14px] sm:text-[15px] font-medium flex items-center justify-center transition-all cursor-pointer shadow-xs px-2 whitespace-nowrap"
                           style={{ fontFamily: "'Roboto', sans-serif" }}
                         >
                           View details
@@ -626,7 +679,7 @@ export default function ProductsPage() {
                         <button
                           type="button"
                           onClick={() => handleAddToCart(product)}
-                          className="w-[150px] h-[42px] rounded-[60px] bg-[#000000] hover:bg-[#1f2937] active:scale-[0.98] text-white text-[15px] font-medium flex items-center justify-center transition-all cursor-pointer shadow-xs flex-shrink-0"
+                          className="flex-1 h-[42px] min-w-0 rounded-[60px] bg-[#000000] hover:bg-[#1f2937] active:scale-[0.98] text-white text-[14px] sm:text-[15px] font-medium flex items-center justify-center transition-all cursor-pointer shadow-xs px-2 whitespace-nowrap"
                           style={{ fontFamily: "'Roboto', sans-serif" }}
                         >
                           Add to Cart
@@ -667,9 +720,9 @@ export default function ProductsPage() {
               {/* Product Image */}
               <div className="w-full md:w-1/2 h-[260px] md:h-[320px] flex items-center justify-center bg-gray-50 rounded-xl p-4">
                 <img
-                  src={selectedProduct.image_url || "/products/velvet_covered.png"}
+                  src={selectedProduct.image_url || "/products/velvet_covered_clean.png"}
                   alt={selectedProduct.name}
-                  className="w-full h-full object-contain"
+                  className="max-h-full max-w-full object-contain"
                 />
               </div>
 
