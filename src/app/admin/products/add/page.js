@@ -131,11 +131,6 @@ export default function AddProductPage() {
     e.preventDefault();
     setError("");
 
-    if (!modelNo.trim()) {
-      setError("Please provide a Model Number");
-      return;
-    }
-
     try {
       setSaving(true);
       const res = await fetch("/api/admin/products", {
@@ -143,7 +138,7 @@ export default function AddProductPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           model_no: modelNo.trim(),
-          name: productName.trim() || modelNo.trim(),
+          name: productName.trim() || modelNo.trim() || "Commercial Equipment",
           brand: brand.trim() || "Maxsel",
           category_name: categoryName.trim() || "General",
           tags: tags.trim(),
@@ -211,11 +206,10 @@ export default function AddProductPage() {
             {/* Model Number */}
             <div>
               <label className="block text-xs font-medium text-gray-700 mb-1.5">
-                Model Number *
+                Model Number
               </label>
               <input
                 type="text"
-                required
                 placeholder="e.g. CPS30HC-GLGY"
                 value={modelNo}
                 onChange={(e) => setModelNo(e.target.value)}
@@ -278,7 +272,7 @@ export default function AddProductPage() {
             <div>
               <div className="flex items-center justify-between mb-1.5">
                 <label className="text-xs font-medium text-gray-700">
-                  Category *
+                  Category
                 </label>
                 {quickCatMsg && (
                   <span className="text-[11px] text-emerald-600 font-medium">

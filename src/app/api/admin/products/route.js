@@ -66,17 +66,18 @@ export async function POST(request) {
       specifications = [],
     } = body;
 
-    if (!model_no?.trim()) {
-      return NextResponse.json({ error: "Product Model Number is required" }, { status: 400 });
-    }
+    const finalModelNo = model_no?.trim() || `PROD-${Date.now().toString().slice(-6)}`;
+    const finalName = (name || finalModelNo).trim();
 
     // Check if model number already exists
-    const [existing] = await query("SELECT id FROM products WHERE model_no = ?", [model_no.trim()]);
-    if (existing) {
-      return NextResponse.json(
-        { error: `Product with model "${model_no}" already exists.` },
-        { status: 400 }
-      );
+    if (model_no?.trim()) {
+      const [existing] = await query("SELECT id FROM products WHERE model_no = ?", [finalModelNo]);
+      if (existing) {
+        return NextResponse.json(
+          { error: `Product with model "${finalModelNo}" already exists.` },
+          { status: 400 }
+        );
+      }
     }
 
     const pool = getDbPool();
@@ -89,12 +90,12 @@ export async function POST(request) {
         `INSERT INTO products (model_no, name, brand, category_name, tags, image_url, brochure_url, is_featured)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
         [
-          model_no.trim(),
-          (name || model_no).trim(),
-          (brand || "Maxsel").trim(),
-          category_name?.trim() || "Commercial Kitchen",
+          finalModelNo,
+          finalName,
+          brand?.trim() || "Maxsel",
+          category_name?.trim() || "General",
           tags?.trim() || "",
-          image_url?.trim() || "/products/preparation_systems.webp",
+          image_url?.trim() || "",
           brochure_url?.trim() || "",
           is_featured ? 1 : 0,
         ]
