@@ -2,9 +2,13 @@
 
 import Link from "next/link";
 import Image from "next/image";
+import { usePathname } from "next/navigation";
 import logoImage from "@/assets/logo/Artboard 1.webp";
 
 export default function Footer() {
+  const pathname = usePathname();
+  if (pathname?.startsWith("/admin")) return null;
+
   return (
     <footer className="w-full bg-white font-poppins pt-16 mt-16 border-t border-gray-50">
       <div className="container mx-auto px-4 xl:px-[80px] max-w-[1728px]">

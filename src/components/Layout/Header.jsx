@@ -2,9 +2,13 @@
 
 import Link from "next/link";
 import Image from "next/image";
+import { usePathname } from "next/navigation";
 import logoImage from "@/assets/logo/Artboard 1.webp";
 
 export default function Header() {
+  const pathname = usePathname();
+  if (pathname?.startsWith("/admin")) return null;
+
   return (
     <header className="w-full bg-white flex justify-center border-b border-gray-100 shadow-sm sticky top-0 z-50">
       <div className="w-full max-w-[1728px] h-[100px] px-[44px] flex items-center justify-between">
