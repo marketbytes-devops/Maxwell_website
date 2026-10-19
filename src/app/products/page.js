@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
+import Link from "next/link";
 
 // Default categories exactly matching Figma design Screenshot 1
 const DESIGN_CATEGORIES = [
@@ -625,13 +626,16 @@ export default function ProductsPage() {
                       </button>
                     </div>
 
-                    {/* Product Image Area: Clean centered product focus */}
-                    <div className="w-full h-[320px] flex items-center justify-center mx-auto overflow-hidden my-auto p-2">
+                    {/* Product Image Area: Clean centered product focus, clickable to inner page */}
+                    <Link
+                      href={`/products/${product.id}`}
+                      className="w-full h-[320px] flex items-center justify-center mx-auto overflow-hidden my-auto p-2 cursor-pointer group"
+                    >
                       {product.image_url ? (
                         <img
                           src={product.image_url}
                           alt={product.name}
-                          className="max-h-full max-w-full object-contain hover:scale-105 transition-transform duration-300 drop-shadow-xs"
+                          className="max-h-full max-w-full object-contain group-hover:scale-105 transition-transform duration-300 drop-shadow-xs"
                           onError={(e) => {
                             e.currentTarget.src = "/products/velvet_covered_clean.png";
                           }}
@@ -645,35 +649,36 @@ export default function ProductsPage() {
                           </svg>
                         </div>
                       )}
-                    </div>
+                    </Link>
 
                     {/* Product Name & Action Buttons Container */}
                     <div className="w-full space-y-3 pt-1">
-                      {/* Product Name */}
+                      {/* Product Name (Clickable to Inner Page) */}
                       {/* Exact Specs: Roboto, weight 500, size 24px, line-height 100% */}
-                      <h3
-                        className="text-[22px] sm:text-[24px] font-medium text-[#000000] truncate leading-[100%]"
-                        style={{
-                          fontFamily: "'Roboto', sans-serif",
-                          lineHeight: "100%",
-                        }}
-                        title={product.name}
-                      >
-                        {product.name}
-                      </h3>
+                      <Link href={`/products/${product.id}`} className="block">
+                        <h3
+                          className="text-[22px] sm:text-[24px] font-medium text-[#000000] hover:text-[#04940B] transition-colors truncate leading-[100%]"
+                          style={{
+                            fontFamily: "'Roboto', sans-serif",
+                            lineHeight: "100%",
+                          }}
+                          title={product.name}
+                        >
+                          {product.name}
+                        </h3>
+                      </Link>
 
                       {/* Action Buttons Row */}
                       {/* Perfectly fitted inside card without any right overflow */}
                       <div className="flex items-center gap-2.5 w-full pt-1">
-                        {/* View details Button */}
-                        <button
-                          type="button"
-                          onClick={() => setSelectedProduct(product)}
+                        {/* View details Link Button (Navigates to inner product page) */}
+                        <Link
+                          href={`/products/${product.id}`}
                           className="flex-[1.35] h-[42px] min-w-0 rounded-[60px] bg-[#04940B] hover:bg-[#037A09] active:scale-[0.98] text-white text-[14px] sm:text-[15px] font-medium flex items-center justify-center transition-all cursor-pointer shadow-xs px-2 whitespace-nowrap"
                           style={{ fontFamily: "'Roboto', sans-serif" }}
                         >
                           View details
-                        </button>
+                        </Link>
 
                         {/* Add to Cart Button */}
                         <button
