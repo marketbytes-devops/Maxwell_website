@@ -14,7 +14,6 @@ export default function ProductDetailPage({ params }) {
   const [loading, setLoading] = useState(true);
   const [activeImage, setActiveImage] = useState("");
   const [quantity, setQuantity] = useState(1);
-  const [toastMessage, setToastMessage] = useState("");
   const [enquiryOpen, setEnquiryOpen] = useState(false);
   const [enquiryForm, setEnquiryForm] = useState({
     name: "",
@@ -248,22 +247,42 @@ export default function ProductDetailPage({ params }) {
 
             {/* Action Buttons: Quantity Stepper, Add to Cart, and Enquiry */}
             <div className="mb-6 flex flex-wrap items-center gap-3">
-              {/* Quantity Stepper */}
+              {/* Quantity Stepper (Clickable + Editable by Typing) */}
               <div className="flex items-center border border-gray-300 rounded-[60px] h-[46px] px-2 bg-white">
                 <button
                   type="button"
-                  onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+                  onClick={() => setQuantity((q) => Math.max(1, (Number(q) || 1) - 1))}
                   className="w-8 h-8 rounded-full flex items-center justify-center text-gray-600 hover:bg-gray-100 font-bold text-base cursor-pointer"
                   aria-label="Decrease quantity"
                 >
                   −
                 </button>
-                <span className="w-10 text-center font-semibold text-gray-900 text-sm select-none">
-                  {quantity}
-                </span>
+                <input
+                  type="number"
+                  min="1"
+                  value={quantity}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val === "") {
+                      setQuantity("");
+                    } else {
+                      const num = parseInt(val, 10);
+                      if (!isNaN(num)) {
+                        setQuantity(Math.max(1, num));
+                      }
+                    }
+                  }}
+                  onBlur={() => {
+                    if (!quantity || Number(quantity) < 1) {
+                      setQuantity(1);
+                    }
+                  }}
+                  className="w-12 text-center font-semibold text-gray-900 text-sm outline-none bg-transparent [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                  aria-label="Quantity"
+                />
                 <button
                   type="button"
-                  onClick={() => setQuantity((q) => q + 1)}
+                  onClick={() => setQuantity((q) => (Number(q) || 1) + 1)}
                   className="w-8 h-8 rounded-full flex items-center justify-center text-gray-600 hover:bg-gray-100 font-bold text-base cursor-pointer"
                   aria-label="Increase quantity"
                 >
@@ -276,9 +295,7 @@ export default function ProductDetailPage({ params }) {
                 type="button"
                 onClick={() => {
                   if (!product) return;
-                  addToCart(product, quantity);
-                  setToastMessage(`"${product.name}" (${quantity}) added to enquiry cart!`);
-                  setTimeout(() => setToastMessage(""), 3500);
+                  addToCart(product, Number(quantity) || 1);
                 }}
                 className="h-[46px] px-6 rounded-[60px] bg-[#0F172A] hover:bg-black active:scale-[0.98] text-white text-[15px] font-medium flex items-center justify-center gap-2 transition-all cursor-pointer shadow-xs whitespace-nowrap"
                 style={{ fontFamily: "'Roboto', sans-serif" }}
@@ -485,22 +502,6 @@ export default function ProductDetailPage({ params }) {
               </div>
             )}
           </div>
-        </div>
-      )}
-
-      {/* Toast Notification */}
-      {toastMessage && (
-        <div className="fixed bottom-6 right-6 z-50 bg-[#0F172A] text-white px-5 py-3.5 rounded-xl shadow-2xl flex items-center gap-3 animate-in fade-in slide-in-from-bottom-4 duration-200">
-          <div className="w-6 h-6 rounded-full bg-[#E11D48] text-white flex items-center justify-center text-xs font-bold">
-            ✓
-          </div>
-          <span className="text-sm font-medium">{toastMessage}</span>
-          <Link
-            href="/cart"
-            className="ml-2 px-3 py-1 bg-white/20 hover:bg-white/30 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1"
-          >
-            View Cart →
-          </Link>
         </div>
       )}
     </div>

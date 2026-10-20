@@ -251,23 +251,43 @@ export default function CartPage() {
                         </span>
                       </div>
 
-                      {/* Quantity Stepper Column */}
+                      {/* Quantity Stepper Column (Clickable + Editable by Typing) */}
                       <div className="col-span-2 flex justify-end">
                         <div className="flex items-center border border-gray-300 rounded-lg h-9 px-1 bg-white shadow-2xs">
                           <button
                             type="button"
-                            onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                            onClick={() => updateQuantity(item.id, Math.max(1, (Number(item.quantity) || 1) - 1))}
                             className="w-6 h-6 flex items-center justify-center text-gray-500 hover:text-black font-bold text-sm cursor-pointer"
                             aria-label="Decrease quantity"
                           >
                             −
                           </button>
-                          <span className="w-8 text-center font-semibold text-gray-900 text-xs sm:text-sm select-none">
-                            {item.quantity}
-                          </span>
+                          <input
+                            type="number"
+                            min="1"
+                            value={item.quantity}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              if (val === "") {
+                                updateQuantity(item.id, "");
+                              } else {
+                                const num = parseInt(val, 10);
+                                if (!isNaN(num)) {
+                                  updateQuantity(item.id, Math.max(1, num));
+                                }
+                              }
+                            }}
+                            onBlur={() => {
+                              if (!item.quantity || Number(item.quantity) < 1) {
+                                updateQuantity(item.id, 1);
+                              }
+                            }}
+                            className="w-10 text-center font-semibold text-gray-900 text-xs sm:text-sm outline-none bg-transparent [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                            aria-label={`Quantity for ${item.name}`}
+                          />
                           <button
                             type="button"
-                            onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                            onClick={() => updateQuantity(item.id, (Number(item.quantity) || 1) + 1)}
                             className="w-6 h-6 flex items-center justify-center text-gray-500 hover:text-black font-bold text-sm cursor-pointer"
                             aria-label="Increase quantity"
                           >

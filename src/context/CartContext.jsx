@@ -72,8 +72,17 @@ export function CartProvider({ children }) {
 
   // Update item quantity
   const updateQuantity = (productId, newQuantity) => {
+    if (newQuantity === "") {
+      setCartItems((prev) =>
+        prev.map((item) =>
+          String(item.id) === String(productId) ? { ...item, quantity: "" } : item
+        )
+      );
+      return;
+    }
+
     const qty = Number(newQuantity);
-    if (qty <= 0) {
+    if (isNaN(qty) || qty <= 0) {
       removeFromCart(productId);
       return;
     }
@@ -102,7 +111,7 @@ export function CartProvider({ children }) {
 
   // Total count of all items (sum of quantities)
   const totalCount = cartItems.reduce(
-    (sum, item) => sum + (Number(item.quantity) || 1),
+    (sum, item) => sum + (Number(item.quantity) || 0),
     0
   );
 

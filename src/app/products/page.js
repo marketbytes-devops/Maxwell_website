@@ -133,7 +133,6 @@ export default function ProductsPage() {
   const [loading, setLoading] = useState(true);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [wishlist, setWishlist] = useState([]);
-  const [cartToast, setCartToast] = useState("");
   const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
   const [sortBy, setSortBy] = useState("featured");
 
@@ -211,12 +210,10 @@ export default function ProductsPage() {
     );
   };
 
-  // Add to cart with feedback
+  // Add to cart
   const handleAddToCart = (product) => {
     if (!product) return;
     addToCart(product, 1);
-    setCartToast(`"${product.name}" added to enquiry cart!`);
-    setTimeout(() => setCartToast(""), 3500);
   };
 
   // Filtered & Sorted Products
@@ -340,14 +337,6 @@ export default function ProductsPage() {
           </h1>
         </div>
       </section>
-
-      {/* Toast Notification */}
-      {cartToast && (
-        <div className="fixed bottom-6 right-6 z-50 bg-[#0F172A] text-white px-5 py-3 rounded-xl shadow-xl flex items-center gap-3 border border-emerald-500/30 animate-bounce">
-          <span className="w-2 h-2 rounded-full bg-[#04940B]"></span>
-          <span className="text-sm font-medium">{cartToast}</span>
-        </div>
-      )}
 
       {/* 3. MAIN CATALOG CONTAINER: Left Categories + Right Product Grid */}
       <section className="w-full max-w-[1728px] mx-auto px-4 sm:px-6 lg:px-12 xl:px-[80px] pb-24">
@@ -797,22 +786,6 @@ export default function ProductsPage() {
               </div>
             </div>
           </div>
-        </div>
-      )}
-
-      {/* Toast Notification */}
-      {cartToast && (
-        <div className="fixed bottom-6 right-6 z-50 bg-[#0F172A] text-white px-5 py-3.5 rounded-xl shadow-2xl flex items-center gap-3 animate-in fade-in slide-in-from-bottom-4 duration-200">
-          <div className="w-6 h-6 rounded-full bg-[#E11D48] text-white flex items-center justify-center text-xs font-bold">
-            ✓
-          </div>
-          <span className="text-sm font-medium">{cartToast}</span>
-          <Link
-            href="/cart"
-            className="ml-2 px-3 py-1 bg-white/20 hover:bg-white/30 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1"
-          >
-            View Cart →
-          </Link>
         </div>
       )}
     </div>
