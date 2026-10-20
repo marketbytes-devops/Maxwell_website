@@ -3,14 +3,18 @@
 import { useState, useEffect, use } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { useCart } from "@/context/CartContext";
 
 export default function ProductDetailPage({ params }) {
   const unwrappedParams = use(params);
   const productId = unwrappedParams.id;
+  const { addToCart } = useCart();
 
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeImage, setActiveImage] = useState("");
+  const [quantity, setQuantity] = useState(1);
+  const [toastMessage, setToastMessage] = useState("");
   const [enquiryOpen, setEnquiryOpen] = useState(false);
   const [enquiryForm, setEnquiryForm] = useState({
     name: "",
@@ -242,12 +246,63 @@ export default function ProductDetailPage({ params }) {
               )}
             </div>
 
-            {/* Green "Enquiry" Button (Exact Specs from Reference) */}
-            <div className="mb-6">
+            {/* Action Buttons: Quantity Stepper, Add to Cart, and Enquiry */}
+            <div className="mb-6 flex flex-wrap items-center gap-3">
+              {/* Quantity Stepper */}
+              <div className="flex items-center border border-gray-300 rounded-[60px] h-[46px] px-2 bg-white">
+                <button
+                  type="button"
+                  onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+                  className="w-8 h-8 rounded-full flex items-center justify-center text-gray-600 hover:bg-gray-100 font-bold text-base cursor-pointer"
+                  aria-label="Decrease quantity"
+                >
+                  −
+                </button>
+                <span className="w-10 text-center font-semibold text-gray-900 text-sm select-none">
+                  {quantity}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setQuantity((q) => q + 1)}
+                  className="w-8 h-8 rounded-full flex items-center justify-center text-gray-600 hover:bg-gray-100 font-bold text-base cursor-pointer"
+                  aria-label="Increase quantity"
+                >
+                  +
+                </button>
+              </div>
+
+              {/* Add to Cart Button */}
+              <button
+                type="button"
+                onClick={() => {
+                  if (!product) return;
+                  addToCart(product, quantity);
+                  setToastMessage(`"${product.name}" (${quantity}) added to enquiry cart!`);
+                  setTimeout(() => setToastMessage(""), 3500);
+                }}
+                className="h-[46px] px-6 rounded-[60px] bg-[#0F172A] hover:bg-black active:scale-[0.98] text-white text-[15px] font-medium flex items-center justify-center gap-2 transition-all cursor-pointer shadow-xs whitespace-nowrap"
+                style={{ fontFamily: "'Roboto', sans-serif" }}
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                  <path
+                    d="M2.5 5.5H5.2L7 13.8C7.15 14.5 7.75 15 8.5 15H16.2C16.9 15 17.5 14.5 17.65 13.8L19 7.5H6.2"
+                    stroke="#E11D48"
+                    strokeWidth="2.2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                  <line x1="6" y1="8" x2="18.8" y2="8" stroke="#E11D48" strokeWidth="2.2" strokeLinecap="round" />
+                  <circle cx="9.5" cy="18.8" r="1.6" fill="#E11D48" />
+                  <circle cx="15.8" cy="18.8" r="1.6" fill="#E11D48" />
+                </svg>
+                Add to Cart
+              </button>
+
+              {/* Green "Enquiry" Button */}
               <button
                 type="button"
                 onClick={() => setEnquiryOpen(true)}
-                className="w-full sm:w-[170px] h-[46px] rounded-[60px] bg-[#04940B] hover:bg-[#037A09] active:scale-[0.98] text-white text-[16px] font-semibold flex items-center justify-center transition-all cursor-pointer shadow-sm hover:shadow-md"
+                className="h-[46px] px-7 rounded-[60px] bg-[#04940B] hover:bg-[#037A09] active:scale-[0.98] text-white text-[15px] font-medium flex items-center justify-center transition-all cursor-pointer shadow-xs whitespace-nowrap"
                 style={{ fontFamily: "'Roboto', sans-serif" }}
               >
                 Enquiry
@@ -430,6 +485,22 @@ export default function ProductDetailPage({ params }) {
               </div>
             )}
           </div>
+        </div>
+      )}
+
+      {/* Toast Notification */}
+      {toastMessage && (
+        <div className="fixed bottom-6 right-6 z-50 bg-[#0F172A] text-white px-5 py-3.5 rounded-xl shadow-2xl flex items-center gap-3 animate-in fade-in slide-in-from-bottom-4 duration-200">
+          <div className="w-6 h-6 rounded-full bg-[#E11D48] text-white flex items-center justify-center text-xs font-bold">
+            ✓
+          </div>
+          <span className="text-sm font-medium">{toastMessage}</span>
+          <Link
+            href="/cart"
+            className="ml-2 px-3 py-1 bg-white/20 hover:bg-white/30 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1"
+          >
+            View Cart →
+          </Link>
         </div>
       )}
     </div>

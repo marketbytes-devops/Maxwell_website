@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
+import { useCart } from "@/context/CartContext";
 
 // Default categories exactly matching Figma design Screenshot 1
 const DESIGN_CATEGORIES = [
@@ -123,6 +124,7 @@ const FALLBACK_PRODUCTS = [
 ];
 
 export default function ProductsPage() {
+  const { addToCart } = useCart();
   const [searchQuery, setSearchQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState("All");
   const [selectedPrices, setSelectedPrices] = useState([]);
@@ -211,8 +213,10 @@ export default function ProductsPage() {
 
   // Add to cart with feedback
   const handleAddToCart = (product) => {
-    setCartToast(`"${product.name}" added to cart!`);
-    setTimeout(() => setCartToast(""), 3000);
+    if (!product) return;
+    addToCart(product, 1);
+    setCartToast(`"${product.name}" added to enquiry cart!`);
+    setTimeout(() => setCartToast(""), 3500);
   };
 
   // Filtered & Sorted Products
@@ -793,6 +797,22 @@ export default function ProductsPage() {
               </div>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Toast Notification */}
+      {cartToast && (
+        <div className="fixed bottom-6 right-6 z-50 bg-[#0F172A] text-white px-5 py-3.5 rounded-xl shadow-2xl flex items-center gap-3 animate-in fade-in slide-in-from-bottom-4 duration-200">
+          <div className="w-6 h-6 rounded-full bg-[#E11D48] text-white flex items-center justify-center text-xs font-bold">
+            ✓
+          </div>
+          <span className="text-sm font-medium">{cartToast}</span>
+          <Link
+            href="/cart"
+            className="ml-2 px-3 py-1 bg-white/20 hover:bg-white/30 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1"
+          >
+            View Cart →
+          </Link>
         </div>
       )}
     </div>
