@@ -145,5 +145,36 @@ export async function initDb() {
     }
   }
 
+  // Create enquiries table
+  await db.execute(`
+    CREATE TABLE IF NOT EXISTS enquiries (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      full_name VARCHAR(255) NOT NULL,
+      phone_number VARCHAR(50) NOT NULL,
+      email VARCHAR(255) NOT NULL,
+      product_category VARCHAR(255) DEFAULT '',
+      requirements TEXT,
+      total_items INT DEFAULT 0,
+      status VARCHAR(50) DEFAULT 'New',
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `);
+
+  // Create enquiry_items table
+  await db.execute(`
+    CREATE TABLE IF NOT EXISTS enquiry_items (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      enquiry_id INT NOT NULL,
+      product_id INT DEFAULT NULL,
+      product_name VARCHAR(255) NOT NULL,
+      model_no VARCHAR(100) DEFAULT '',
+      category_name VARCHAR(255) DEFAULT '',
+      price DECIMAL(10, 2) DEFAULT 0.00,
+      quantity INT DEFAULT 1,
+      INDEX idx_enquiry_id (enquiry_id),
+      FOREIGN KEY (enquiry_id) REFERENCES enquiries(id) ON DELETE CASCADE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `);
+
   isInitialized = true;
 }
