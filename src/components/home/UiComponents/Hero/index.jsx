@@ -9,6 +9,8 @@ export default function HeroBanner({
   subtitle,
   primaryButtonText,
   secondaryButtonText,
+  onPrimaryClick,
+  onSecondaryClick,
   features,
   bgImage,
   bgVideo,
@@ -109,7 +111,9 @@ export default function HeroBanner({
           
           {secondaryButtonText && (
             <button 
-              className="flex items-center justify-center bg-transparent border border-white text-white hover:bg-white/10 transition-colors w-full sm:w-[202px] h-[56px] rounded-[8px] py-[16px] px-[32px] gap-[8px]"
+              type="button"
+              onClick={onSecondaryClick}
+              className="flex items-center justify-center bg-transparent border border-white text-white hover:bg-white/10 transition-colors w-full sm:w-[202px] h-[56px] rounded-[8px] py-[16px] px-[32px] gap-[8px] cursor-pointer"
               style={{ fontFamily: "'Inter', sans-serif", fontWeight: 500 }}
             >
               {secondaryButtonText}

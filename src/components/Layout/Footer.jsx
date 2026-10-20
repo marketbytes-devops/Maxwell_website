@@ -15,24 +15,51 @@ export default function Footer() {
         
         {/* Top Section - Locations Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 border border-gray-200 mb-16">
-          <div className="p-8 border-b md:border-b-0 md:border-r border-gray-200">
-            <h3 className="text-[25px] font-medium text-[#0F172A] mb-2 font-poppins leading-[150%]">Kollam</h3>
+          <a 
+            href="https://www.google.com/maps?sca_esv=b9aa9d5decff392c&biw=1536&bih=730&sxsrf=APpeQnv5jHZj380DoYtyC1xn-zx2xmzt9Q:1792473962669&uact=5&gs_lp=Egxnd3Mtd2l6LXNlcnAiFG1heHNlbCBhZ2VuY3kga29sbGFtMg0QLhiABBgNGMcBGK8BMgUQABjvBTIIEAAYiQUYogQyBRAAGO8FMggQABiABBiiBEiHD1DNA1jGDHABeACQAQCYAcABoAHECKoBAzAuN7gBA8gBAPgBAZgCCKAC9AnCAggQABjvBRiwA8ICCxAAGIAEGKIEGLADwgILEAAYiQUYogQYsAPCAgQQIxgnwgIGEAAYFhgemAMAiAYBkAYFkgcFMS42LjGgB6cesgcFMC42LjG4B94JwgcFMi0zLjXIB0GACAE&um=1&ie=UTF-8&fb=1&gl=in&sa=X&geocode=KZVkbczZ_QU7MeVIUrkSn6Du&daddr=ST+THOMAS+SHOPPING+COMPLEX,+near+Jawahar+Balabhavan,+Kadapakkada,+Kollam,+Keralam+691001"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="p-8 border-b md:border-b-0 md:border-r border-gray-200 hover:bg-gray-50/70 transition-colors group block"
+            title="Open Kollam showroom in Google Maps"
+          >
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-[25px] font-medium text-[#0F172A] font-poppins leading-[150%] group-hover:text-[#04940B] transition-colors">Kollam</h3>
+              <span className="text-[12px] font-semibold text-[#04940B] opacity-0 group-hover:opacity-100 transition-opacity">View Map ↗</span>
+            </div>
             <p className="text-[18px] font-normal font-poppins text-[#475569] leading-[150%]">
               ST THOMAS SHOPPING COMPLEX, near Jawahar<br/>Balabhavan, Kadapakkada, Kollam, Kerala<br/>691001
             </p>
-          </div>
-          <div className="p-8 border-b md:border-b-0 md:border-r border-gray-200">
-            <h3 className="text-[25px] font-medium text-[#0F172A] mb-2 font-poppins leading-[150%]">Trivandrum</h3>
+          </a>
+          <a 
+            href="https://www.google.com/maps?sca_esv=b9aa9d5decff392c&biw=1536&bih=730&sxsrf=APpeQnvNDNdp3GympD8XkA-LG-LFixurvw:1792474081487&uact=5&gs_lp=Egxnd3Mtd2l6LXNlcnAiGG1heHNlbCBhZ2VuY3kgVHJpdmFuZHJ1bTIGEAAYFhgeMgsQABiABBiKBRiGAzIIEAAYgAQYogQyCBAAGIkFGKIEMggQABiJBRiiBDIIEAAYgAQYogRIhiZQ2QNY_R9wAXgAkAEAmAH2AqAByhiqAQcwLjMuNC41uAEDyAEA-AEBmAIMoAKMGMICChAjGLACGLADGCfCAhAQLhiABBgNGMcBGK8BGLADwgIIEAAY7wUYsAPCAgsQABiJBRiiBBiwA8ICCxAAGIAEGKIEGLADwgIEECMYJ8ICBRAAGO8FmAMA4gMFEgExIECIBgGQBgaSBwcxLjEuNS41oAfTMLIHBzAuMS41LjW4B4YYwgcFMC42LjbIByqACAE&um=1&ie=UTF-8&fb=1&gl=in&sa=X&geocode=KVe_t4y9uwU7MTHUOIbk64p9&daddr=Aaliya+Tower,+New,+Karakkamandapam,+Nemom,+Thiruvananthapuram,+Keralam+695020"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="p-8 border-b md:border-b-0 md:border-r border-gray-200 hover:bg-gray-50/70 transition-colors group block"
+            title="Open Trivandrum showroom in Google Maps"
+          >
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-[25px] font-medium text-[#0F172A] font-poppins leading-[150%] group-hover:text-[#04940B] transition-colors">Trivandrum</h3>
+              <span className="text-[12px] font-semibold text-[#04940B] opacity-0 group-hover:opacity-100 transition-opacity">View Map ↗</span>
+            </div>
             <p className="text-[18px] font-normal font-poppins text-[#475569] leading-[150%]">
               Aaliya Tower, New, Karakkamandapam, Nemom,<br/>Thiruvananthapuram, Kerala 695020
             </p>
-          </div>
-          <div className="p-8">
-            <h3 className="text-[25px] font-medium text-[#0F172A] mb-2 font-poppins leading-[150%]">Kochi</h3>
+          </a>
+          <a 
+            href="https://www.google.com/maps/dir/Edapally+Metro+Station,+Edappally,+Kochi,+Ernakulam,+Keralam+682024/Maxsel+Agencies+Kochi,+Kolappilly+Velleparambil+House,+Sastha+Temple+Rd,+Kaloor,+Ernakulam,+Keralam+682017/@10.0097809,76.2795939,14z/data=!3m1!4b1!4m13!4m12!1m5!1m1!1s0x3b080db0ffffffff:0xe9cf5831273cce6!2m2!1d76.3083641!2d10.025263!1m5!1m1!1s0x3b080d444cfc451b:0x4243dd2c4cc4b36b!2m2!1d76.2905556!2d9.9967666?entry=ttu&g_ep=EgoyMDI2MTAxNC4wIKXMDSoASAFQAw%3D%3D"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="p-8 hover:bg-gray-50/70 transition-colors group block"
+            title="Open Kochi showroom in Google Maps"
+          >
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-[25px] font-medium text-[#0F172A] font-poppins leading-[150%] group-hover:text-[#04940B] transition-colors">Kochi</h3>
+              <span className="text-[12px] font-semibold text-[#04940B] opacity-0 group-hover:opacity-100 transition-opacity">View Map ↗</span>
+            </div>
             <p className="text-[18px] font-normal font-poppins text-[#475569] leading-[150%]">
               Velleparambil House<br/>Sastha Temple Road, Ernakulam - 682017, Kerala
             </p>
-          </div>
+          </a>
         </div>
 
         {/* Middle Section - Links & Info */}

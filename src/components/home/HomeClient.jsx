@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import HeroBanner from "./UiComponents/Hero";
 import PremiumBrands from "./UiComponents/PremiumBrands";
 import ProductCategories from "./UiComponents/ProductCategories";
@@ -11,8 +12,11 @@ import AboutBrand from "./UiComponents/AboutBrand";
 import Testimonials from "./UiComponents/Testimonials";
 import Insights from "./UiComponents/Insights";
 import CommercialCTA from "./UiComponents/CommercialCTA";
+import RequestQuoteModal from "@/components/common/RequestQuoteModal";
 
 export default function HomeClient() {
+  const [quoteModalOpen, setQuoteModalOpen] = useState(false);
+
   const heroFeatures = [
     {
       text: "Premium Brands",
@@ -57,6 +61,7 @@ export default function HomeClient() {
         subtitle="Professional equipment for hotels, restaurants, bakeries, cafés, supermarkets and food businesses from leading brands, all in one place."
         primaryButtonText="Explore Products"
         secondaryButtonText="Request a Quote"
+        onSecondaryClick={() => setQuoteModalOpen(true)}
         bgImage="/bannerimage.webp"
         bgVideo="https://res.cloudinary.com/mbz958a7/video/upload/q_auto,f_auto/v1791791658/WhatsApp_Video_2026-10-12_at_12.03.25_PM.mp4"
         features={heroFeatures}
@@ -72,7 +77,13 @@ export default function HomeClient() {
       <AboutBrand />
       <Testimonials />
       <Insights />
-      <CommercialCTA />
+      <CommercialCTA onRequestQuote={() => setQuoteModalOpen(true)} />
+
+      {/* Reusable Request a Quote Modal */}
+      <RequestQuoteModal 
+        isOpen={quoteModalOpen} 
+        onClose={() => setQuoteModalOpen(false)} 
+      />
     </main>
   );
 }

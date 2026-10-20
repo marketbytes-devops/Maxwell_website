@@ -1,43 +1,9 @@
 "use client";
 
-import { useState } from "react";
 import Image from "next/image";
+import RequirementsForm from "@/components/common/RequirementsForm";
 
 export default function ContactPage() {
-  const [formData, setFormData] = useState({
-    fullName: "",
-    phoneNumber: "",
-    email: "",
-    productCategory: "",
-    requirements: "",
-  });
-
-  const [submitted, setSubmitted] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    setSubmitting(true);
-    setTimeout(() => {
-      setSubmitting(false);
-      setSubmitted(true);
-      setTimeout(() => {
-        setSubmitted(false);
-        setFormData({
-          fullName: "",
-          phoneNumber: "",
-          email: "",
-          productCategory: "",
-          requirements: "",
-        });
-      }, 4000);
-    }, 600);
-  };
 
   const locations = [
     {
@@ -45,14 +11,14 @@ export default function ContactPage() {
       address: "ST THOMAS SHOPPING COMPLEX, near Jawahar Balabhavan, Kadapakkada, Kollam, Kerala 691001",
       phone: "+91 98472 72004",
       mapImg: "/images/maps/kollam_map.png",
-      mapUrl: "https://maps.google.com/?q=ST+THOMAS+SHOPPING+COMPLEX,+near+Jawahar+Balabhavan,+Kadapakkada,+Kollam,+Kerala+691001",
+      mapUrl: "https://www.google.com/maps?sca_esv=b9aa9d5decff392c&biw=1536&bih=730&sxsrf=APpeQnv5jHZj380DoYtyC1xn-zx2xmzt9Q:1792473962669&uact=5&gs_lp=Egxnd3Mtd2l6LXNlcnAiFG1heHNlbCBhZ2VuY3kga29sbGFtMg0QLhiABBgNGMcBGK8BMgUQABjvBTIIEAAYiQUYogQyBRAAGO8FMggQABiABBiiBEiHD1DNA1jGDHABeACQAQCYAcABoAHECKoBAzAuN7gBA8gBAPgBAZgCCKAC9AnCAggQABjvBRiwA8ICCxAAGIAEGKIEGLADwgILEAAYiQUYogQYsAPCAgQQIxgnwgIGEAAYFhgemAMAiAYBkAYFkgcFMS42LjGgB6cesgcFMC42LjG4B94JwgcFMi0zLjXIB0GACAE&um=1&ie=UTF-8&fb=1&gl=in&sa=X&geocode=KZVkbczZ_QU7MeVIUrkSn6Du&daddr=ST+THOMAS+SHOPPING+COMPLEX,+near+Jawahar+Balabhavan,+Kadapakkada,+Kollam,+Keralam+691001",
     },
     {
       city: "Trivandrum",
       address: "Aaliya Tower, New, Karakkamandapam, Nemom, Thiruvananthapuram, Kerala 695020",
       phone: "+91 98472 70004",
       mapImg: "/images/maps/trivandrum_map.png",
-      mapUrl: "https://maps.google.com/?q=Aaliya+Tower,+New,+Karakkamandapam,+Nemom,+Thiruvananthapuram,+Kerala+695020",
+      mapUrl: "https://www.google.com/maps?sca_esv=b9aa9d5decff392c&biw=1536&bih=730&sxsrf=APpeQnvNDNdp3GympD8XkA-LG-LFixurvw:1792474081487&uact=5&gs_lp=Egxnd3Mtd2l6LXNlcnAiGG1heHNlbCBhZ2VuY3kgVHJpdmFuZHJ1bTIGEAAYFhgeMgsQABiABBiKBRiGAzIIEAAYgAQYogQyCBAAGIkFGKIEMggQABiJBRiiBDIIEAAYgAQYogRIhiZQ2QNY_R9wAXgAkAEAmAH2AqAByhiqAQcwLjMuNC41uAEDyAEA-AEBmAIMoAKMGMICChAjGLACGLADGCfCAhAQLhiABBgNGMcBGK8BGLADwgIIEAAY7wUYsAPCAgsQABiJBRiiBBiwA8ICCxAAGIAEGKIEGLADwgIEECMYJ8ICBRAAGO8FmAMA4gMFEgExIECIBgGQBgaSBwcxLjEuNS41oAfTMLIHBzAuMS41LjW4B4YYwgcFMC42LjbIByqACAE&um=1&ie=UTF-8&fb=1&gl=in&sa=X&geocode=KVe_t4y9uwU7MTHUOIbk64p9&daddr=Aaliya+Tower,+New,+Karakkamandapam,+Nemom,+Thiruvananthapuram,+Keralam+695020",
     },
     {
       city: "Kochi",
@@ -60,7 +26,7 @@ export default function ContactPage() {
       address: "Velleparambil House, Sastha Temple Road, Ernakulam – 682017, Kerala",
       phone: "+91 81568 70004",
       mapImg: "/images/maps/kochi_map.png",
-      mapUrl: "https://maps.google.com/?q=Velleparambil+House,+Sastha+Temple+Road,+Ernakulam+-+682017,+Kerala",
+      mapUrl: "https://www.google.com/maps/dir/Edapally+Metro+Station,+Edappally,+Kochi,+Ernakulam,+Keralam+682024/Maxsel+Agencies+Kochi,+Kolappilly+Velleparambil+House,+Sastha+Temple+Rd,+Kaloor,+Ernakulam,+Keralam+682017/@10.0097809,76.2795939,14z/data=!3m1!4b1!4m13!4m12!1m5!1m1!1s0x3b080db0ffffffff:0xe9cf5831273cce6!2m2!1d76.3083641!2d10.025263!1m5!1m1!1s0x3b080d444cfc451b:0x4243dd2c4cc4b36b!2m2!1d76.2905556!2d9.9967666?entry=ttu&g_ep=EgoyMDI2MTAxNC4wIKXMDSoASAFQAw%3D%3D",
     },
   ];
 
@@ -139,121 +105,7 @@ export default function ContactPage() {
 
           {/* RIGHT CARD: Tell Us About Your Requirements */}
           <div className="w-full flex-1 bg-white rounded-[24px] border border-[#D1D5DB] p-6 sm:p-8 lg:p-10 shadow-2xs">
-            <h2
-              className="text-2xl sm:text-[32px] font-bold text-[#1F2937] tracking-tight leading-tight"
-              style={{ fontFamily: "'Poppins', sans-serif" }}
-            >
-              Tell Us About Your Requirements
-            </h2>
-
-            <p className="text-gray-500 text-[14px] sm:text-[15px] leading-relaxed mt-2 mb-8 font-normal">
-              Whether you are setting up a new business or upgrading your existing facility, share your requirements with us. Our team will help you explore suitable equipment options.
-            </p>
-
-            {submitted ? (
-              <div className="py-12 text-center space-y-3">
-                <div className="w-16 h-16 bg-emerald-100 text-[#04940B] rounded-full flex items-center justify-center mx-auto text-3xl font-bold">
-                  ✓
-                </div>
-                <h3 className="text-2xl font-bold text-gray-900">Thank You!</h3>
-                <p className="text-sm text-gray-600 max-w-md mx-auto">
-                  Your requirements have been submitted successfully. A member of our commercial equipment team will get back to you shortly.
-                </p>
-              </div>
-            ) : (
-              <form onSubmit={handleSubmit} className="space-y-5">
-                {/* Row 1: Full Name & Phone Number */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                  <div>
-                    <label className="block text-[13px] sm:text-[14px] font-medium text-gray-800 mb-2">
-                      Full Name
-                    </label>
-                    <input
-                      type="text"
-                      name="fullName"
-                      required
-                      value={formData.fullName}
-                      onChange={handleChange}
-                      placeholder=""
-                      className="w-full h-[48px] px-4 rounded-[10px] border border-gray-300 focus:outline-none focus:border-[#04940B] focus:ring-1 focus:ring-[#04940B] text-sm text-gray-800 transition"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-[13px] sm:text-[14px] font-medium text-gray-800 mb-2">
-                      Phone Number
-                    </label>
-                    <input
-                      type="tel"
-                      name="phoneNumber"
-                      required
-                      value={formData.phoneNumber}
-                      onChange={handleChange}
-                      placeholder=""
-                      className="w-full h-[48px] px-4 rounded-[10px] border border-gray-300 focus:outline-none focus:border-[#04940B] focus:ring-1 focus:ring-[#04940B] text-sm text-gray-800 transition"
-                    />
-                  </div>
-                </div>
-
-                {/* Row 2: Email address & Product Category */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                  <div>
-                    <label className="block text-[13px] sm:text-[14px] font-medium text-gray-800 mb-2">
-                      Email address
-                    </label>
-                    <input
-                      type="email"
-                      name="email"
-                      required
-                      value={formData.email}
-                      onChange={handleChange}
-                      placeholder=""
-                      className="w-full h-[48px] px-4 rounded-[10px] border border-gray-300 focus:outline-none focus:border-[#04940B] focus:ring-1 focus:ring-[#04940B] text-sm text-gray-800 transition"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-[13px] sm:text-[14px] font-medium text-gray-800 mb-2">
-                      Product Category
-                    </label>
-                    <input
-                      type="text"
-                      name="productCategory"
-                      value={formData.productCategory}
-                      onChange={handleChange}
-                      placeholder=""
-                      className="w-full h-[48px] px-4 rounded-[10px] border border-gray-300 focus:outline-none focus:border-[#04940B] focus:ring-1 focus:ring-[#04940B] text-sm text-gray-800 transition"
-                    />
-                  </div>
-                </div>
-
-                {/* Row 3: Tell Us About Your Requirements */}
-                <div>
-                  <label className="block text-[13px] sm:text-[14px] font-medium text-gray-800 mb-2">
-                    Tell Us About Your Requirements
-                  </label>
-                  <textarea
-                    name="requirements"
-                    rows="5"
-                    value={formData.requirements}
-                    onChange={handleChange}
-                    placeholder=""
-                    className="w-full h-[140px] sm:h-[160px] p-4 rounded-[10px] border border-gray-300 focus:outline-none focus:border-[#04940B] focus:ring-1 focus:ring-[#04940B] text-sm text-gray-800 transition resize-none"
-                  ></textarea>
-                </div>
-
-                {/* Submit Button (Aligned to the Right matching reference) */}
-                <div className="flex justify-end pt-3">
-                  <button
-                    type="submit"
-                    disabled={submitting}
-                    className="w-[140px] sm:w-[150px] h-[46px] rounded-[60px] bg-[#04940B] hover:bg-[#037A09] active:scale-[0.98] text-white font-medium text-[16px] transition-all cursor-pointer shadow-xs flex items-center justify-center disabled:opacity-50"
-                  >
-                    {submitting ? "Submitting..." : "Submit"}
-                  </button>
-                </div>
-              </form>
-            )}
+            <RequirementsForm />
           </div>
         </div>
       </section>
@@ -287,7 +139,7 @@ export default function ContactPage() {
                     href={loc.mapUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="block w-full h-[190px] sm:h-[210px] overflow-hidden mb-6 bg-gray-50 border border-gray-100 group cursor-pointer"
+                    className="relative block w-full h-[190px] sm:h-[210px] overflow-hidden mb-6 bg-gray-50 border border-gray-100 group cursor-pointer"
                     title={`View ${loc.city} showroom on Google Maps`}
                   >
                     <img
@@ -295,15 +147,33 @@ export default function ContactPage() {
                       alt={`${loc.city} Showroom Map`}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                     />
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/15 transition-colors flex items-center justify-center">
+                      <span className="opacity-0 group-hover:opacity-100 transition-opacity bg-white/95 text-gray-900 text-[12px] font-semibold px-3 py-1.5 rounded-full shadow-md flex items-center gap-1.5">
+                        <svg className="w-3.5 h-3.5 text-[#04940B]" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd"/>
+                        </svg>
+                        Open in Google Maps ↗
+                      </span>
+                    </div>
                   </a>
 
-                  {/* City Name */}
-                  <h3
-                    className="text-xl sm:text-[22px] font-bold text-gray-900 mb-2.5"
-                    style={{ fontFamily: "'Poppins', sans-serif" }}
-                  >
-                    {loc.city}
-                  </h3>
+                  {/* City Name & Map Link */}
+                  <div className="flex items-center justify-between mb-2.5">
+                    <h3
+                      className="text-xl sm:text-[22px] font-bold text-gray-900"
+                      style={{ fontFamily: "'Poppins', sans-serif" }}
+                    >
+                      {loc.city}
+                    </h3>
+                    <a
+                      href={loc.mapUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 text-[12px] sm:text-[13px] font-semibold text-[#04940B] hover:text-[#037A09] transition-colors"
+                    >
+                      Get Directions ↗
+                    </a>
+                  </div>
 
                   {/* Address */}
                   {loc.addressLines ? (

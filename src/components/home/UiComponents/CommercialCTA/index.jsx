@@ -1,6 +1,6 @@
 import React from "react";
 
-export default function CommercialCTA() {
+export default function CommercialCTA({ onRequestQuote }) {
   return (
     <section className="relative w-full bg-[#121F28] font-poppins overflow-hidden flex items-center min-h-[506px]">
       
@@ -33,7 +33,11 @@ export default function CommercialCTA() {
 
           <div className="flex flex-wrap gap-[16px]">
             {/* Request a Quote Button */}
-            <button className="flex items-center gap-[12px] w-full sm:w-[327px] h-[58px] bg-white rounded-[59px] text-[#0F172A] font-semibold text-[16px] hover:bg-gray-100 transition-colors pl-[10px] pr-[24px]">
+            <button 
+              type="button"
+              onClick={onRequestQuote}
+              className="flex items-center gap-[12px] w-full sm:w-[327px] h-[58px] bg-white rounded-[59px] text-[#0F172A] font-semibold text-[16px] hover:bg-gray-100 transition-colors pl-[10px] pr-[24px] cursor-pointer"
+            >
               <span className="w-[42px] h-[42px] bg-[#121F28] rounded-full flex items-center justify-center flex-shrink-0">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
