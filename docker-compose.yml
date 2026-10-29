@@ -5,11 +5,13 @@ services:
       dockerfile: Dockerfile
     container_name: maxwell-website
     restart: unless-stopped
+    env_file:
+      - .env
     ports:
       - "3005:3000"
     environment:
       - NODE_ENV=production
-      - DB_HOST=${DB_HOST:-mysql}
+      - DB_HOST=${DB_HOST:-shared-mysql}
       - DB_USER=${DB_USER:-root}
       - DB_PASSWORD=${DB_PASSWORD}
       - DB_NAME=${DB_NAME:-maxsel_db}
