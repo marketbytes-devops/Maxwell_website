@@ -1,0 +1,25 @@
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: maxwell-website
+    restart: unless-stopped
+    ports:
+      - "3005:3000"
+    environment:
+      - NODE_ENV=production
+      - DB_HOST=${DB_HOST:-mysql}
+      - DB_USER=${DB_USER:-root}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_NAME=${DB_NAME:-maxsel_db}
+      - DB_PORT=${DB_PORT:-3306}
+      - ADMIN_EMAIL=${ADMIN_EMAIL:-admin@maxsel.in}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-admin123}
+      - JWT_SECRET=${JWT_SECRET:-maxsel_super_secret_jwt_key_2026_secure}
+    networks:
+      - shared-db-network
+
+networks:
+  shared-db-network:
+    external: true
