@@ -1,16 +1,13 @@
 services:
-  web:
+  backend:
     build:
-      context: .
+      context: ./backend
       dockerfile: Dockerfile
-    container_name: maxwell-website
+    container_name: maxwell-backend
     restart: unless-stopped
     env_file:
       - .env
-    ports:
-      - "3005:3000"
     environment:
-      - NODE_ENV=production
       - DB_HOST=${DB_HOST:-shared-mysql}
       - DB_USER=${DB_USER:-root}
       - DB_PASSWORD=${DB_PASSWORD}
@@ -19,6 +16,27 @@ services:
       - ADMIN_EMAIL=${ADMIN_EMAIL:-admin@maxsel.in}
       - ADMIN_PASSWORD=${ADMIN_PASSWORD:-admin123}
       - JWT_SECRET=${JWT_SECRET:-maxsel_super_secret_jwt_key_2026_secure}
+      - UPLOADS_DIR=/app/uploads
+    volumes:
+      - ./backend/uploads:/app/uploads
+    ports:
+      - "8000:8000"
+    networks:
+      - shared-db-network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: maxwell-website
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - BACKEND_URL=http://backend:8000
+    ports:
+      - "3005:3000"
+    depends_on:
+      - backend
     networks:
       - shared-db-network
 
