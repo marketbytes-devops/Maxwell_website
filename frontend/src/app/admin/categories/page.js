@@ -29,6 +29,16 @@ export default function CategoriesPage() {
   const [subName, setSubName] = useState("");
   const [subCapacityNote, setSubCapacityNote] = useState("");
 
+  // Expand/collapse state for categories with subcategories
+  const [expandedCategoryIds, setExpandedCategoryIds] = useState({});
+
+  const toggleCategoryExpand = (catId) => {
+    setExpandedCategoryIds((prev) => ({
+      ...prev,
+      [catId]: !prev[catId],
+    }));
+  };
+
   // Edit state
   const [editingId, setEditingId] = useState(null);
   const [editName, setEditName] = useState("");
@@ -208,6 +218,8 @@ export default function CategoriesPage() {
     const isLevel1 = depth === 1;
     const isLevel2 = depth === 2;
     const isLevel3 = depth >= 3;
+    const hasChildren = cat.children && cat.children.length > 0;
+    const isExpanded = !!expandedCategoryIds[cat.id];
 
     const levelBadge = isLevel1
       ? "Level 1: Main Category"
@@ -222,18 +234,28 @@ export default function CategoriesPage() {
       : "bg-purple-50 text-purple-700 border-purple-200";
 
     const indentClass = isLevel1
-      ? "pl-4 sm:pl-6"
+      ? "pl-4 sm:pl-6 bg-white"
       : isLevel2
-      ? "pl-8 sm:pl-12 bg-gray-50/40"
-      : "pl-12 sm:pl-18 bg-gray-50/80";
+      ? "pl-8 sm:pl-12 bg-gray-50/50"
+      : "pl-12 sm:pl-18 bg-gray-100/60";
 
     return (
       <div key={cat.id} className="border-b border-gray-100 last:border-b-0">
         <div
-          className={`py-3.5 pr-4 sm:pr-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${indentClass}`}
+          onClick={() => {
+            if (hasChildren) {
+              toggleCategoryExpand(cat.id);
+            }
+          }}
+          className={`py-3.5 pr-4 sm:pr-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${indentClass} ${
+            hasChildren ? "cursor-pointer hover:bg-gray-50/80 transition-colors" : ""
+          }`}
         >
           {editingId === cat.id ? (
-            <div className="flex-1 flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+            <div
+              onClick={(e) => e.stopPropagation()}
+              className="flex-1 flex flex-col sm:flex-row items-stretch sm:items-center gap-2"
+            >
               <input
                 type="text"
                 value={editName}
@@ -266,17 +288,48 @@ export default function CategoriesPage() {
           ) : (
             <>
               <div className="flex items-center gap-2.5 flex-wrap">
-                {depth > 1 && (
-                  <span className="text-gray-300 font-mono text-xs select-none">
+                {/* Chevron icon indicator for expandable categories */}
+                {hasChildren ? (
+                  <span
+                    className={`text-gray-500 transition-transform duration-200 inline-flex items-center justify-center w-5 h-5 rounded hover:bg-gray-200/60 ${
+                      isExpanded ? "rotate-90 text-[#04940B]" : ""
+                    }`}
+                  >
+                    <svg
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <polyline points="9 18 15 12 9 6"></polyline>
+                    </svg>
+                  </span>
+                ) : depth > 1 ? (
+                  <span className="text-gray-300 font-mono text-xs select-none pl-1">
                     {depth === 2 ? "↳" : "└──"}
                   </span>
+                ) : (
+                  <span className="w-5"></span>
                 )}
+
                 <span className="font-semibold text-gray-900 text-sm">{cat.name}</span>
+
                 <span
                   className={`text-[10px] px-2 py-0.5 rounded-full font-medium border ${badgeColor}`}
                 >
                   {levelBadge}
                 </span>
+
+                {hasChildren && (
+                  <span className="text-[11px] text-gray-400 font-normal">
+                    ({cat.children.length} {cat.children.length === 1 ? "subcategory" : "subcategories"} {isExpanded ? "• click to hide" : "• click to view"})
+                  </span>
+                )}
+
                 {cat.capacity_note && (
                   <span className="text-xs text-gray-400 italic">({cat.capacity_note})</span>
                 )}
@@ -287,7 +340,10 @@ export default function CategoriesPage() {
                 )}
               </div>
 
-              <div className="flex items-center gap-2 flex-wrap">
+              <div
+                onClick={(e) => e.stopPropagation()}
+                className="flex items-center gap-2 flex-wrap"
+              >
                 {depth < 3 && (
                   <button
                     onClick={() => {
@@ -317,8 +373,8 @@ export default function CategoriesPage() {
           )}
         </div>
 
-        {/* Children Subcategories */}
-        {cat.children && cat.children.length > 0 && (
+        {/* Children Subcategories: only rendered when expanded/clicked */}
+        {hasChildren && isExpanded && (
           <div className="border-t border-gray-100/70">
             {cat.children.map((child) => renderCategoryNode(child, depth + 1))}
           </div>
