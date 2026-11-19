@@ -20,7 +20,7 @@ services:
     volumes:
       - ./backend/uploads:/app/uploads
     ports:
-      - "8000:8000"
+      - "8005:8000"
     networks:
       - shared-db-network
 
