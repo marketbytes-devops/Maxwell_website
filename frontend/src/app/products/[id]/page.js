@@ -157,41 +157,43 @@ export default function ProductDetailPage({ params }) {
           {/* ========================================================= */}
           <div className="lg:col-span-6 flex flex-col items-center">
             {/* Main Showcase Image Box */}
-            <div className="w-full max-w-[560px] h-[340px] sm:h-[420px] bg-white rounded-2xl border border-gray-200/80 p-6 flex items-center justify-center shadow-xs overflow-hidden group">
+            <div className="w-full max-w-[560px] h-[360px] sm:h-[460px] bg-white rounded-2xl border border-gray-200/80 p-3 sm:p-4 flex items-center justify-center shadow-xs overflow-hidden group">
               <img
                 src={activeImage || product.image_url}
                 alt={product.name}
-                className="max-h-full max-w-full object-contain group-hover:scale-105 transition-transform duration-300 drop-shadow-md"
+                className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300 drop-shadow-md"
                 onError={(e) => {
                   e.currentTarget.src = "/products/freezer/main_view.png";
                 }}
               />
             </div>
 
-            {/* 4 Clickable Thumbnails Row (Matching Reference Image) */}
-            <div className="w-full max-w-[560px] flex items-center justify-start sm:justify-center gap-3 sm:gap-4 mt-6 overflow-x-auto pb-2">
-              {galleryList.slice(0, 4).map((imgUrl, index) => {
-                const isActive = activeImage === imgUrl;
-                return (
-                  <button
-                    key={index}
-                    type="button"
-                    onClick={() => setActiveImage(imgUrl)}
-                    className={`w-[78px] h-[78px] sm:w-[88px] sm:h-[88px] rounded-xl border bg-white p-1.5 flex items-center justify-center transition-all cursor-pointer flex-shrink-0 ${
-                      isActive
-                        ? "border-2 border-[#04940B] shadow-md scale-105 ring-2 ring-[#04940B]/20"
-                        : "border-gray-200 hover:border-gray-400 opacity-80 hover:opacity-100"
-                    }`}
-                  >
-                    <img
-                      src={imgUrl}
-                      alt={`View ${index + 1}`}
-                      className="max-h-full max-w-full object-contain"
-                    />
-                  </button>
-                );
-              })}
-            </div>
+            {/* Clickable Thumbnails Row (All Uploaded Images) */}
+            {galleryList.length > 1 && (
+              <div className="w-full max-w-[560px] flex items-center justify-start sm:justify-center gap-3 sm:gap-4 mt-6 overflow-x-auto pb-2">
+                {galleryList.map((imgUrl, index) => {
+                  const isActive = (activeImage || product.image_url) === imgUrl;
+                  return (
+                    <button
+                      key={index}
+                      type="button"
+                      onClick={() => setActiveImage(imgUrl)}
+                      className={`w-[78px] h-[78px] sm:w-[88px] sm:h-[88px] rounded-xl border bg-white p-1.5 flex items-center justify-center transition-all cursor-pointer flex-shrink-0 ${
+                        isActive
+                          ? "border-2 border-[#04940B] shadow-md scale-105 ring-2 ring-[#04940B]/20"
+                          : "border-gray-200 hover:border-gray-400 opacity-80 hover:opacity-100"
+                      }`}
+                    >
+                      <img
+                        src={imgUrl}
+                        alt={`${product.name} thumbnail ${index + 1}`}
+                        className="max-h-full max-w-full object-contain"
+                      />
+                    </button>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
           {/* ========================================================= */}
@@ -245,33 +247,9 @@ export default function ProductDetailPage({ params }) {
                   </div>
                 ))
               ) : (
-                <div className="space-y-2 text-sm text-gray-600">
-                  <div className="flex items-start">
-                    <span className="w-2 h-2 rounded-full bg-gray-400 mt-2 mr-3 flex-shrink-0"></span>
-                    <span className="min-w-[220px]">External Dimension (mm):</span>
-                    <span className="font-medium text-gray-900">1360 (W) x 695 (D) x 882 (H)</span>
-                  </div>
-                  <div className="flex items-start">
-                    <span className="w-2 h-2 rounded-full bg-gray-400 mt-2 mr-3 flex-shrink-0"></span>
-                    <span className="min-w-[220px]">Gross volume:</span>
-                    <span className="font-medium text-gray-900">422 Liters</span>
-                  </div>
-                  <div className="flex items-start">
-                    <span className="w-2 h-2 rounded-full bg-gray-400 mt-2 mr-3 flex-shrink-0"></span>
-                    <span className="min-w-[220px]">Temperature range (°C):</span>
-                    <span className="font-medium text-gray-900">&lt; - 17.0°C</span>
-                  </div>
-                  <div className="flex items-start">
-                    <span className="w-2 h-2 rounded-full bg-gray-400 mt-2 mr-3 flex-shrink-0"></span>
-                    <span className="min-w-[220px]">No. of Baskets:</span>
-                    <span className="font-medium text-gray-900">3</span>
-                  </div>
-                  <div className="flex items-start">
-                    <span className="w-2 h-2 rounded-full bg-gray-400 mt-2 mr-3 flex-shrink-0"></span>
-                    <span className="min-w-[220px]">Energy Star Rating :</span>
-                    <span className="font-medium text-gray-900">3 Star</span>
-                  </div>
-                </div>
+                <p className="text-sm text-gray-400 italic">
+                  No additional technical specifications listed for this product.
+                </p>
               )}
             </div>
 

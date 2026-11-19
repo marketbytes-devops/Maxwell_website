@@ -302,6 +302,12 @@ export default function AdminDashboardPage() {
                       >
                         View
                       </Link>
+                      <Link
+                        href={`/admin/products/edit/${p.id}`}
+                        className="text-xs text-blue-600 hover:text-blue-800 font-semibold px-2.5 py-1 rounded-md hover:bg-blue-50 mr-2 transition"
+                      >
+                        Edit
+                      </Link>
                       <button
                         onClick={() => handleDelete(p.id, p.model_no)}
                         disabled={deletingId === p.id}

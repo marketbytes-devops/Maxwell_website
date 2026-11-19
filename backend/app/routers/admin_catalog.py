@@ -75,8 +75,32 @@ class ProductCreate(BaseModel):
     image_url: str | None = ""
     brochure_url: str | None = ""
     is_featured: bool = False
-    images: list[str | ProductImageItem] = Field(default_factory=list)
+    images: list[str | ProductImageItem | dict[str, Any]] = Field(default_factory=list)
     specifications: list[dict[str, Any] | ProductSpecItem] = Field(default_factory=list)
+
+
+class ProductUpdate(BaseModel):
+    model_no: str | None = None
+    name: str | None = None
+    brand_id: int | None = None
+    brand: str | None = None
+    category_id: int | None = None
+    category_name: str | None = None
+    description: str | None = ""
+    tags: str | None = ""
+    image_url: str | None = ""
+    brochure_url: str | None = ""
+    is_featured: bool = False
+    images: list[str | ProductImageItem | dict[str, Any]] = Field(default_factory=list)
+    specifications: list[dict[str, Any] | ProductSpecItem] = Field(default_factory=list)
+
+
+class BatchProductCreate(BaseModel):
+    brand_id: int
+    brand: str | None = None
+    category_id: int
+    category_name: str | None = None
+    products: list[ProductCreate]
 
 
 # -------------------------------------------------------------
@@ -626,6 +650,201 @@ def create_product(payload: ProductCreate, _admin: dict = Depends(get_current_ad
                 )
 
     return {"success": True, "product_id": product_id, "model_no": model_no}
+
+
+@router.get("/products/{product_id}")
+def get_admin_product_by_id(product_id: int, _admin: dict = Depends(get_current_admin)):
+    init_db()
+    engine = get_engine()
+    with engine.connect() as conn:
+        row = conn.execute(
+            text(
+                """
+                SELECT p.id, p.model_no, p.name, p.brand_id, p.brand, p.category_id, p.category_name,
+                       p.description, p.tags, p.image_url, p.brochure_url, p.is_featured, p.created_at
+                FROM products p
+                WHERE p.id = :id
+                """
+            ),
+            {"id": product_id},
+        ).mappings().fetchone()
+
+        if not row:
+            raise HTTPException(status_code=404, detail="Product not found")
+
+        products = attach_product_details(conn, [dict(row)])
+        return {"success": True, "product": products[0]}
+
+
+@router.put("/products/{product_id}")
+def update_product(product_id: int, payload: ProductUpdate, _admin: dict = Depends(get_current_admin)):
+    init_db()
+    engine = get_engine()
+    with engine.begin() as conn:
+        existing = conn.execute(
+            text("SELECT id FROM products WHERE id = :id"), {"id": product_id}
+        ).fetchone()
+        if not existing:
+            raise HTTPException(status_code=404, detail="Product not found")
+
+        model_no = payload.model_no.strip() if payload.model_no else ""
+        if model_no:
+            dup = conn.execute(
+                text("SELECT id FROM products WHERE model_no = :model_no AND id != :id"),
+                {"model_no": model_no, "id": product_id},
+            ).fetchone()
+            if dup:
+                raise HTTPException(
+                    status_code=400, detail=f"Product with model number '{model_no}' already exists"
+                )
+
+        brand_name = payload.brand
+        brand_id = payload.brand_id
+        if brand_id and not brand_name:
+            b_row = conn.execute(text("SELECT name FROM brands WHERE id = :id"), {"id": brand_id}).fetchone()
+            if b_row:
+                brand_name = b_row[0]
+
+        category_name = payload.category_name
+        category_id = payload.category_id
+        if category_id and not category_name:
+            c_row = conn.execute(text("SELECT name, brand_id FROM categories WHERE id = :id"), {"id": category_id}).fetchone()
+            if c_row:
+                category_name = c_row[0]
+                if not brand_id and c_row[1]:
+                    brand_id = c_row[1]
+
+        primary_image = payload.image_url or ""
+        normalized_images: list[dict] = []
+        for idx, img in enumerate(payload.images):
+            if isinstance(img, str):
+                url_str = img.strip()
+                if url_str:
+                    is_p = (idx == 0 and not primary_image) or (url_str == primary_image)
+                    normalized_images.append({"url": url_str, "is_primary": is_p, "display_order": idx + 1})
+            elif isinstance(img, dict):
+                url_str = img.get("url", "").strip()
+                if url_str:
+                    normalized_images.append({
+                        "url": url_str,
+                        "is_primary": bool(img.get("is_primary")),
+                        "display_order": int(img.get("display_order") or idx + 1),
+                    })
+            elif isinstance(img, ProductImageItem):
+                url_str = img.url.strip()
+                if url_str:
+                    normalized_images.append({
+                        "url": url_str,
+                        "is_primary": img.is_primary,
+                        "display_order": img.display_order or idx + 1,
+                    })
+
+        if not primary_image and normalized_images:
+            primary_image = normalized_images[0]["url"]
+            normalized_images[0]["is_primary"] = True
+
+        name = (payload.name or model_no).strip()
+
+        conn.execute(
+            text(
+                """
+                UPDATE products
+                SET model_no = :model_no,
+                    name = :name,
+                    brand_id = :brand_id,
+                    brand = :brand,
+                    category_id = :category_id,
+                    category_name = :category_name,
+                    description = :description,
+                    tags = :tags,
+                    image_url = :image_url,
+                    brochure_url = :brochure_url,
+                    is_featured = :is_featured
+                WHERE id = :id
+                """
+            ),
+            {
+                "id": product_id,
+                "model_no": model_no,
+                "name": name,
+                "brand_id": brand_id,
+                "brand": brand_name or "Maxsel",
+                "category_id": category_id,
+                "category_name": category_name or "General",
+                "description": payload.description or "",
+                "tags": payload.tags or "",
+                "image_url": primary_image,
+                "brochure_url": payload.brochure_url or "",
+                "is_featured": 1 if payload.is_featured else 0,
+            },
+        )
+
+        # Replace images
+        conn.execute(text("DELETE FROM product_images WHERE product_id = :pid"), {"pid": product_id})
+        for im in normalized_images:
+            conn.execute(
+                text(
+                    """
+                    INSERT INTO product_images (product_id, image_url, is_primary, display_order)
+                    VALUES (:pid, :url, :is_p, :ord)
+                    """
+                ),
+                {
+                    "pid": product_id,
+                    "url": im["url"],
+                    "is_p": 1 if im["is_primary"] else 0,
+                    "ord": im["display_order"],
+                },
+            )
+
+        # Replace specifications
+        conn.execute(text("DELETE FROM product_specifications WHERE product_id = :pid"), {"pid": product_id})
+        for idx, spec in enumerate(payload.specifications, start=1):
+            if isinstance(spec, dict):
+                k = (spec.get("key") or spec.get("spec_key") or "").strip()
+                v = (spec.get("value") or spec.get("spec_value") or "").strip()
+            elif isinstance(spec, ProductSpecItem):
+                k = spec.key.strip()
+                v = spec.value.strip()
+            else:
+                k, v = "", ""
+
+            if k and v:
+                conn.execute(
+                    text(
+                        """
+                        INSERT INTO product_specifications (product_id, spec_key, spec_value, display_order)
+                        VALUES (:pid, :key, :val, :ord)
+                        """
+                    ),
+                    {"pid": product_id, "key": k, "val": v, "ord": idx},
+                )
+
+    return {"success": True, "message": "Product updated successfully"}
+
+
+@router.post("/products/batch")
+def create_products_batch(payload: BatchProductCreate, _admin: dict = Depends(get_current_admin)):
+    init_db()
+    if not payload.products:
+        raise HTTPException(status_code=400, detail="No products provided")
+
+    created_ids = []
+    for item in payload.products:
+        # Inherit batch brand and category if missing
+        if not item.brand_id:
+            item.brand_id = payload.brand_id
+        if not item.brand and payload.brand:
+            item.brand = payload.brand
+        if not item.category_id:
+            item.category_id = payload.category_id
+        if not item.category_name and payload.category_name:
+            item.category_name = payload.category_name
+
+        res = create_product(item, _admin=_admin)
+        created_ids.append(res["product_id"])
+
+    return {"success": True, "created_count": len(created_ids), "product_ids": created_ids}
 
 
 @router.delete("/products/{product_id}")

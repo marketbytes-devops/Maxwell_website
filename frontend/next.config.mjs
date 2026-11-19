@@ -4,7 +4,7 @@ const nextConfig = {
     cpus: 1,
   },
   async rewrites() {
-    const backendUrl = process.env.BACKEND_URL || "http://maxwell-backend:8000";
+    const backendUrl = (process.env.BACKEND_URL || "http://127.0.0.1:8000").replace(/\/+$/, "");
     return [
       {
         source: "/api/:path*",

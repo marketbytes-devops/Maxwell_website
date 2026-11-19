@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import Link from "next/link";
 import { useCart } from "@/context/CartContext";
 
@@ -33,20 +33,22 @@ export default function ProductsPage() {
   const [wishlist, setWishlist] = useState([]);
   const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
   const [sortBy, setSortBy] = useState("featured");
+  const [isSearchDropdownOpen, setIsSearchDropdownOpen] = useState(false);
+  const searchContainerRef = useRef(null);
 
   // 1. Fetch Brands, All Categories Tree, and Products on Mount
   useEffect(() => {
     async function loadInitial() {
       try {
-        const [bRes, cRes, pRes] = await Promise.all([
-          fetch("/api/brands"),
-          fetch("/api/categories?as_tree=true"),
-          fetch("/api/products"),
+        const timestamp = Date.now();
+        const [bRes, cRes, pRes] = await Promise.allSettled([
+          fetch(`/api/brands?t=${timestamp}`, { cache: "no-store" }).then((r) => (r.ok ? r.json() : Promise.reject(r))),
+          fetch(`/api/categories?as_tree=true&t=${timestamp}`, { cache: "no-store" }).then((r) => (r.ok ? r.json() : Promise.reject(r))),
+          fetch(`/api/products?t=${timestamp}`, { cache: "no-store" }).then((r) => (r.ok ? r.json() : Promise.reject(r))),
         ]);
-        if (bRes.ok) {
-          const bData = await bRes.json();
-          const rawBrands = bData.brands || [];
-          // Sort brands so "Western" appears first
+
+        if (bRes.status === "fulfilled" && bRes.value?.brands) {
+          const rawBrands = bRes.value.brands || [];
           const sortedBrands = [...rawBrands].sort((a, b) => {
             const aName = (a.name || "").toLowerCase();
             const bName = (b.name || "").toLowerCase();
@@ -55,14 +57,20 @@ export default function ProductsPage() {
             return aName.localeCompare(bName);
           });
           setBrands(sortedBrands);
+        } else if (bRes.status === "rejected") {
+          console.warn("Failed to load brands:", bRes.reason);
         }
-        if (cRes.ok) {
-          const cData = await cRes.json();
-          setAllCategoriesTree(cData.categories || []);
+
+        if (cRes.status === "fulfilled" && cRes.value?.categories) {
+          setAllCategoriesTree(cRes.value.categories || []);
+        } else if (cRes.status === "rejected") {
+          console.warn("Failed to load categories:", cRes.reason);
         }
-        if (pRes.ok) {
-          const pData = await pRes.json();
-          setProducts(pData.products || []);
+
+        if (pRes.status === "fulfilled" && pRes.value?.products) {
+          setProducts(pRes.value.products || []);
+        } else if (pRes.status === "rejected") {
+          console.warn("Failed to load products:", pRes.reason);
         }
       } catch (err) {
         console.error("Failed to load catalog data:", err);
@@ -200,6 +208,55 @@ export default function ProductsPage() {
     selectedPrices,
     sortBy,
   ]);
+
+  // Click outside to close search dropdown
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (searchContainerRef.current && !searchContainerRef.current.contains(event.target)) {
+        setIsSearchDropdownOpen(false);
+      }
+    }
+    function handleKeyDown(event) {
+      if (event.key === "Escape") {
+        setIsSearchDropdownOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, []);
+
+  // Suggestions for live search dropdown
+  const searchSuggestions = useMemo(() => {
+    const q = searchQuery.toLowerCase().trim();
+    if (!q) return [];
+    return products
+      .filter((p) => {
+        const matchName = p.name?.toLowerCase().includes(q);
+        const matchModel = p.model_no?.toLowerCase().includes(q);
+        const matchCat = p.category_name?.toLowerCase().includes(q);
+        const matchBrand = p.brand?.toLowerCase().includes(q);
+        const matchTags = p.tags?.toLowerCase().includes(q);
+        return matchName || matchModel || matchCat || matchBrand || matchTags;
+      })
+      .slice(0, 8);
+  }, [products, searchQuery]);
+
+  // Handle selecting an item from the search dropdown
+  const handleSelectSuggestion = (p) => {
+    setSearchQuery(p.model_no || p.name);
+    // If current selected brand or category filter excludes this product, reset them so it's visible in the catalog
+    if (selectedBrandId !== null && p.brand_id && p.brand_id !== selectedBrandId) {
+      setSelectedBrandId(null);
+    }
+    if (activeCategoryId !== null && p.category_id && !targetCategoryIds?.includes(p.category_id)) {
+      setActiveCategoryId(null);
+    }
+    setIsSearchDropdownOpen(false);
+  };
 
   // Toggle Price Filter
   const togglePrice = (id) => {
@@ -379,10 +436,10 @@ export default function ProductsPage() {
 
         <div className="flex flex-col lg:flex-row gap-8 xl:gap-14 items-start">
           {/* ========================================================= */}
-          {/* LEFT SIDEBAR: PRODUCT CATEGORY (BRAND ACCORDIONS)         */}
+          {/* LEFT SIDEBAR: PRODUCT CATEGORY (STICKY ON DESKTOP)        */}
           {/* ========================================================= */}
           <aside
-            className={`w-full lg:w-[320px] flex-shrink-0 ${
+            className={`w-full lg:w-[320px] flex-shrink-0 lg:sticky lg:top-[120px] lg:self-start lg:max-h-[calc(100vh-140px)] lg:overflow-y-auto lg:pr-2 ${
               mobileFilterOpen ? "block" : "hidden lg:block"
             }`}
           >
@@ -501,41 +558,7 @@ export default function ProductsPage() {
               })}
             </div>
 
-            {/* PRICE FILTER SECTION */}
-            <div className="mt-10 pt-6 border-t border-gray-200">
-              <h3
-                className="font-bold text-[20px] text-[#323334] mb-4"
-                style={{ fontFamily: "'Roboto', sans-serif" }}
-              >
-                Price
-              </h3>
-
-              <div className="space-y-3">
-                {PRICE_RANGES.map((range) => {
-                  const isChecked = selectedPrices.includes(range.id);
-
-                  return (
-                    <label
-                      key={range.id}
-                      className="flex items-center gap-3.5 cursor-pointer group select-none"
-                    >
-                      <input
-                        type="checkbox"
-                        checked={isChecked}
-                        onChange={() => togglePrice(range.id)}
-                        className="w-[18px] h-[18px] rounded border border-gray-300 text-[#04940B] focus:ring-[#04940B] cursor-pointer accent-[#04940B]"
-                      />
-                      <span
-                        className="text-[16px] text-[#323334] group-hover:text-black transition-colors"
-                        style={{ fontFamily: "'Roboto', sans-serif" }}
-                      >
-                        {range.label}
-                      </span>
-                    </label>
-                  );
-                })}
-              </div>
-            </div>
+           
           </aside>
 
           {/* ========================================================= */}
@@ -543,36 +566,240 @@ export default function ProductsPage() {
           {/* ========================================================= */}
           <main className="flex-1 w-full">
             {/* Top Toolbar */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-6 mb-6 border-b border-gray-200 gap-4">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between pb-6 mb-6 border-b border-gray-200 gap-4">
               <div>
-                <p className="text-gray-500 text-sm font-roboto">
-                  Showing{" "}
-                  <span className="font-semibold text-gray-900">
-                    {filteredProducts.length}
-                  </span>{" "}
-                  product{filteredProducts.length === 1 ? "" : "s"}
+                <p className="text-gray-500 text-sm font-roboto flex items-center flex-wrap gap-1.5">
+                  <span>
+                    Showing{" "}
+                    <span className="font-semibold text-gray-900">
+                      {filteredProducts.length}
+                    </span>{" "}
+                    product{filteredProducts.length === 1 ? "" : "s"}
+                  </span>
                   {selectedBrandId !== null && (
-                    <span className="ml-1 text-[#04940B] font-medium">
+                    <span className="text-[#04940B] font-medium">
                       for {activeBrandName}
+                    </span>
+                  )}
+                  {searchQuery && (
+                    <span className="inline-flex items-center gap-1 bg-[#04940B]/10 text-[#04940B] text-xs font-medium px-2 py-0.5 rounded-full ml-1">
+                      Filter: &ldquo;{searchQuery}&rdquo;
+                      <button
+                        type="button"
+                        onClick={() => setSearchQuery("")}
+                        className="hover:text-red-500 cursor-pointer ml-0.5 text-xs font-bold leading-none"
+                        title="Clear filter"
+                      >
+                        ×
+                      </button>
                     </span>
                   )}
                 </p>
               </div>
 
-              {/* Sort By Dropdown */}
-              <div className="flex items-center gap-2">
-                <span className="text-xs sm:text-sm text-gray-500 font-roboto">
-                  Sort by:
-                </span>
-                <select
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value)}
-                  className="text-xs sm:text-sm font-medium bg-transparent border border-gray-200 rounded-lg px-2.5 py-1.5 text-gray-700 focus:outline-none focus:ring-1 focus:ring-[#04940B]"
-                >
-                  <option value="featured">Featured</option>
-                  <option value="name-asc">Name (A-Z)</option>
-                  <option value="name-desc">Name (Z-A)</option>
-                </select>
+              {/* Controls: Search Bar with Autocomplete Dropdown + Sort By */}
+              <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                {/* Search Bar with Autocomplete Dropdown */}
+                <div ref={searchContainerRef} className="relative w-full sm:w-[260px] md:w-[320px]">
+                  <div className="relative flex items-center">
+                    <span className="absolute left-3 text-gray-400 pointer-events-none">
+                      <svg
+                        width="16"
+                        height="16"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2.2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                      </svg>
+                    </span>
+                    <input
+                      type="text"
+                      value={searchQuery}
+                      onChange={(e) => {
+                        setSearchQuery(e.target.value);
+                        setIsSearchDropdownOpen(true);
+                      }}
+                      onFocus={() => setIsSearchDropdownOpen(true)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          setIsSearchDropdownOpen(false);
+                        }
+                      }}
+                      placeholder="Search products or model..."
+                      className="w-full pl-9 pr-8 py-2 text-xs sm:text-sm bg-white border border-gray-200 rounded-lg text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#04940B]/25 focus:border-[#04940B] transition-all shadow-2xs"
+                    />
+                    {searchQuery && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSearchQuery("");
+                          setIsSearchDropdownOpen(false);
+                        }}
+                        className="absolute right-2.5 text-gray-400 hover:text-gray-600 text-xs w-4 h-4 flex items-center justify-center rounded-full hover:bg-gray-100 cursor-pointer transition-colors"
+                        title="Clear search"
+                      >
+                        ✕
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Autocomplete / Filter Dropdown */}
+                  {isSearchDropdownOpen && (
+                    <div className="absolute right-0 top-full mt-1.5 w-full sm:w-[360px] max-h-[380px] overflow-y-auto bg-white rounded-xl shadow-2xl border border-gray-200 z-50 py-1.5 divide-y divide-gray-100 animate-in fade-in slide-in-from-top-1 duration-150">
+                      {searchQuery.trim().length > 0 ? (
+                        searchSuggestions.length > 0 ? (
+                          <>
+                            <div className="px-3.5 py-1.5 text-[11px] font-semibold text-gray-400 uppercase tracking-wider flex items-center justify-between">
+                              <span>Matching Products ({searchSuggestions.length})</span>
+                              <span className="text-[10px] text-gray-400 font-normal">Click to filter</span>
+                            </div>
+                            <div className="divide-y divide-gray-50">
+                              {searchSuggestions.map((p) => (
+                                <div
+                                  key={p.id}
+                                  onClick={() => handleSelectSuggestion(p)}
+                                  className="px-3.5 py-2 hover:bg-emerald-50/70 cursor-pointer flex items-center gap-3 transition-colors group"
+                                >
+                                  <div className="w-10 h-10 rounded-md bg-gray-50 border border-gray-200/60 p-1 flex items-center justify-center flex-shrink-0 overflow-hidden">
+                                    {p.image_url ? (
+                                      <img
+                                        src={p.image_url}
+                                        alt={p.name}
+                                        className="w-full h-full object-contain"
+                                        onError={(e) => {
+                                          e.currentTarget.src = "/products/velvet_covered_clean.png";
+                                        }}
+                                      />
+                                    ) : (
+                                      <span className="text-gray-300 text-xs">📦</span>
+                                    )}
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-1.5">
+                                      <p className="text-xs sm:text-sm font-medium text-gray-900 truncate group-hover:text-[#04940B] transition-colors">
+                                        {p.name || p.model_no}
+                                      </p>
+                                    </div>
+                                    <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                                      {p.model_no && (
+                                        <span className="text-[10px] font-mono font-semibold bg-emerald-50 text-[#04940B] px-1.5 py-0.2 rounded border border-emerald-200">
+                                          {p.model_no}
+                                        </span>
+                                      )}
+                                      {p.brand && (
+                                        <span className="text-[10px] font-medium text-gray-500 bg-gray-100 px-1.5 py-0.2 rounded">
+                                          {p.brand}
+                                        </span>
+                                      )}
+                                      {p.category_name && (
+                                        <span className="text-[10px] text-gray-400 truncate max-w-[120px]">
+                                          {p.category_name}
+                                        </span>
+                                      )}
+                                    </div>
+                                  </div>
+                                  <Link
+                                    href={`/products/${p.id}`}
+                                    onClick={(e) => e.stopPropagation()}
+                                    title="View full details"
+                                    className="p-1 text-gray-400 hover:text-[#04940B] hover:bg-white rounded border border-transparent hover:border-gray-200 transition-colors flex-shrink-0"
+                                  >
+                                    <svg
+                                      width="14"
+                                      height="14"
+                                      viewBox="0 0 24 24"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      strokeWidth="2"
+                                    >
+                                      <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                                      <polyline points="15 3 21 3 21 9"></polyline>
+                                      <line x1="10" y1="14" x2="21" y2="3"></line>
+                                    </svg>
+                                  </Link>
+                                </div>
+                              ))}
+                            </div>
+                            <div className="px-3.5 pt-2 pb-1 flex items-center justify-between text-xs text-gray-500 bg-gray-50/70">
+                              <span className="text-[11px]">Filtering product grid in real-time</span>
+                              <button
+                                type="button"
+                                onClick={() => setIsSearchDropdownOpen(false)}
+                                className="text-[#04940B] hover:underline font-medium text-xs cursor-pointer"
+                              >
+                                Done
+                              </button>
+                            </div>
+                          </>
+                        ) : (
+                          <div className="px-4 py-6 text-center text-gray-500">
+                            <p className="text-xs font-semibold text-gray-700">No matching products found</p>
+                            <p className="text-[11px] text-gray-400 mt-1">
+                              No product matches &ldquo;{searchQuery}&rdquo;
+                            </p>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setSearchQuery("");
+                                setIsSearchDropdownOpen(false);
+                              }}
+                              className="mt-2 text-xs font-medium text-[#04940B] hover:underline cursor-pointer"
+                            >
+                              Clear search
+                            </button>
+                          </div>
+                        )
+                      ) : (
+                        <div className="px-3.5 py-3 text-xs text-gray-500">
+                          <p className="font-semibold text-gray-700 mb-0.5">Quick Product Filter</p>
+                          <p className="text-[11px] text-gray-400 mb-2.5">
+                            Type any model number, product name, brand, or category.
+                          </p>
+                          {products.length > 0 && (
+                            <div>
+                              <span className="text-[10px] uppercase font-semibold text-gray-400 tracking-wider">
+                                Suggestions:
+                              </span>
+                              <div className="flex flex-wrap gap-1.5 mt-1.5">
+                                {products.slice(0, 6).map((p) => (
+                                  <button
+                                    key={p.id}
+                                    type="button"
+                                    onClick={() => handleSelectSuggestion(p)}
+                                    className="text-[11px] font-medium bg-gray-100 hover:bg-emerald-50 hover:text-[#04940B] text-gray-700 px-2 py-0.5 rounded-full transition-colors cursor-pointer"
+                                  >
+                                    {p.model_no || p.name}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {/* Sort By Dropdown */}
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  <span className="text-xs sm:text-sm text-gray-500 font-roboto whitespace-nowrap">
+                    Sort by:
+                  </span>
+                  <select
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value)}
+                    className="text-xs sm:text-sm font-medium bg-white border border-gray-200 rounded-lg px-2.5 py-2 text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#04940B]/25 focus:border-[#04940B] cursor-pointer shadow-2xs"
+                  >
+                    <option value="featured">Featured</option>
+                    <option value="name-asc">Name (A-Z)</option>
+                    <option value="name-desc">Name (Z-A)</option>
+                  </select>
+                </div>
               </div>
             </div>
 
@@ -640,7 +867,7 @@ export default function ProductsPage() {
                         <img
                           src={product.image_url}
                           alt={product.name}
-                          className="max-h-full max-w-full object-contain group-hover:scale-105 transition-transform duration-300 drop-shadow-xs"
+                          className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300 drop-shadow-xs"
                           onError={(e) => {
                             e.currentTarget.src = "/products/velvet_covered_clean.png";
                           }}

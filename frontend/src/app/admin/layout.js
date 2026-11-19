@@ -66,9 +66,9 @@ export default function AdminLayout({ children }) {
   }
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] flex font-poppins text-gray-800">
-      {/* Sidebar */}
-      <aside className="w-64 bg-[#0F172A] text-white flex flex-col flex-shrink-0 min-h-screen sticky top-0 shadow-xl z-20">
+    <div className="h-screen bg-[#F8FAFC] flex font-poppins text-gray-800 overflow-hidden">
+      {/* Sidebar - Permanently Fixed */}
+      <aside className="w-64 bg-[#0F172A] text-white flex flex-col flex-shrink-0 h-screen shadow-xl z-20 select-none">
         {/* Brand Header */}
         <div className="p-6 border-b border-gray-800 flex flex-col items-start bg-[#0B132B]">
           <Link href="/" className="mb-2">
@@ -87,8 +87,8 @@ export default function AdminLayout({ children }) {
           </span>
         </div>
 
-        {/* Navigation */}
-        <nav className="flex-grow p-4 space-y-1.5">
+        {/* Navigation - Scrollable if screen height is small */}
+        <nav className="flex-grow p-4 space-y-1.5 overflow-y-auto">
           <Link
             href="/admin"
             className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${
@@ -177,8 +177,8 @@ export default function AdminLayout({ children }) {
         </div>
       </aside>
 
-      {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
+      {/* Main Content Area - Scrollable */}
+      <div className="flex-1 flex flex-col min-w-0 h-screen overflow-y-auto">
         {/* Top Header Bar */}
         <header className="bg-white border-b border-gray-200 px-8 py-4 flex items-center justify-between sticky top-0 z-10 shadow-xs">
           <div>
@@ -187,6 +187,8 @@ export default function AdminLayout({ children }) {
                 ? "Product Dashboard"
                 : pathname === "/admin/products/add"
                 ? "Add Product"
+                : pathname?.startsWith("/admin/products/edit")
+                ? "Edit Product"
                 : pathname === "/admin/categories"
                 ? "Categories Management"
                 : pathname === "/admin/brands"
@@ -196,7 +198,7 @@ export default function AdminLayout({ children }) {
           </div>
 
           <div className="flex items-center gap-4">
-            {pathname !== "/admin/products/add" && (
+            {pathname !== "/admin/products/add" && !pathname?.startsWith("/admin/products/edit") && (
               <Link
                 href="/admin/products/add"
                 className="bg-[#FBBF24] hover:bg-[#F59E0B] text-[#0F172A] font-semibold text-sm px-5 py-2.5 rounded-full flex items-center gap-2 shadow-xs transition-all hover:scale-105"
