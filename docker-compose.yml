@@ -32,7 +32,7 @@ services:
     restart: unless-stopped
     environment:
       - NODE_ENV=production
-      - BACKEND_URL=http://backend:8000
+      - BACKEND_URL=http://maxwell-backend:8000
     ports:
       - "3005:3000"
     depends_on:
