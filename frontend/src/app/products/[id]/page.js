@@ -253,57 +253,14 @@ export default function ProductDetailPage({ params }) {
               )}
             </div>
 
-            {/* Action Buttons: Quantity Stepper, Add to Cart, and Enquiry */}
+            {/* Action Buttons: Add to Cart, Enquiry, and Download Brochure */}
             <div className="mb-6 flex flex-wrap items-center gap-3">
-              {/* Quantity Stepper (Clickable + Editable by Typing) */}
-              <div className="flex items-center border border-gray-300 rounded-[60px] h-[46px] px-2 bg-white">
-                <button
-                  type="button"
-                  onClick={() => setQuantity((q) => Math.max(1, (Number(q) || 1) - 1))}
-                  className="w-8 h-8 rounded-full flex items-center justify-center text-gray-600 hover:bg-gray-100 font-bold text-base cursor-pointer"
-                  aria-label="Decrease quantity"
-                >
-                  −
-                </button>
-                <input
-                  type="number"
-                  min="1"
-                  value={quantity}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    if (val === "") {
-                      setQuantity("");
-                    } else {
-                      const num = parseInt(val, 10);
-                      if (!isNaN(num)) {
-                        setQuantity(Math.max(1, num));
-                      }
-                    }
-                  }}
-                  onBlur={() => {
-                    if (!quantity || Number(quantity) < 1) {
-                      setQuantity(1);
-                    }
-                  }}
-                  className="w-12 text-center font-semibold text-gray-900 text-sm outline-none bg-transparent [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                  aria-label="Quantity"
-                />
-                <button
-                  type="button"
-                  onClick={() => setQuantity((q) => (Number(q) || 1) + 1)}
-                  className="w-8 h-8 rounded-full flex items-center justify-center text-gray-600 hover:bg-gray-100 font-bold text-base cursor-pointer"
-                  aria-label="Increase quantity"
-                >
-                  +
-                </button>
-              </div>
-
               {/* Add to Cart Button */}
               <button
                 type="button"
                 onClick={() => {
                   if (!product) return;
-                  addToCart(product, Number(quantity) || 1);
+                  addToCart(product, 1);
                 }}
                 className="h-[46px] px-6 rounded-[60px] bg-[#0F172A] hover:bg-black active:scale-[0.98] text-white text-[15px] font-medium flex items-center justify-center gap-2 transition-all cursor-pointer shadow-xs whitespace-nowrap"
                 style={{ fontFamily: "'Roboto', sans-serif" }}
@@ -332,6 +289,40 @@ export default function ProductDetailPage({ params }) {
               >
                 Enquiry
               </button>
+
+              {/* Download Brochure Button */}
+              {product.brochure_url ? (
+                <a
+                  href={product.brochure_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  download
+                  className="h-[46px] px-6 rounded-[60px] border-2 border-[#04940B] text-[#04940B] hover:bg-[#04940B] hover:text-white active:scale-[0.98] text-[15px] font-medium flex items-center justify-center gap-2 transition-all cursor-pointer shadow-xs whitespace-nowrap"
+                  style={{ fontFamily: "'Roboto', sans-serif" }}
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                    <polyline points="7 10 12 15 17 10" />
+                    <line x1="12" y1="15" x2="12" y2="3" />
+                  </svg>
+                  Download Brochure
+                </a>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => alert("Brochure for this model will be available soon. Please click Enquiry to request specifications.")}
+                  className="h-[46px] px-6 rounded-[60px] border-2 border-gray-300 text-gray-500 hover:border-gray-400 hover:text-gray-700 active:scale-[0.98] text-[15px] font-medium flex items-center justify-center gap-2 transition-all cursor-pointer shadow-xs whitespace-nowrap"
+                  style={{ fontFamily: "'Roboto', sans-serif" }}
+                  title="No brochure uploaded yet"
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                    <polyline points="7 10 12 15 17 10" />
+                    <line x1="12" y1="15" x2="12" y2="3" />
+                  </svg>
+                  Download Brochure
+                </button>
+              )}
             </div>
 
             {/* Categories & Tags Metadata */}
@@ -354,42 +345,6 @@ export default function ProductDetailPage({ params }) {
         </div>
       </section>
 
-      {/* 3. STORE LOCATIONS BAR (Kollam, Trivandrum, Kochi matching Reference) */}
-      <section className="w-full max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-12 py-10 mb-12">
-        <div className="w-full bg-white border border-gray-200 rounded-xl p-6 sm:p-8 shadow-2xs">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 divide-y md:divide-y-0 md:divide-x divide-gray-200">
-            {/* Kollam */}
-            <div className="pt-4 md:pt-0 md:pr-6">
-              <h4 className="text-base sm:text-lg font-bold text-gray-900 mb-2 font-poppins">
-                Kollam
-              </h4>
-              <p className="text-xs sm:text-sm text-gray-600 leading-relaxed font-roboto">
-                ST THOMAS SHOPPING COMPLEX, near Jawahar Balabhavan, Kadapakkada, Kollam, Kerala 691001
-              </p>
-            </div>
-
-            {/* Trivandrum */}
-            <div className="pt-4 md:pt-0 md:px-6">
-              <h4 className="text-base sm:text-lg font-bold text-gray-900 mb-2 font-poppins">
-                Trivandrum
-              </h4>
-              <p className="text-xs sm:text-sm text-gray-600 leading-relaxed font-roboto">
-                Aaliya Tower, New, Karakkamandapam, Nemom, Thiruvananthapuram, Kerala 695020
-              </p>
-            </div>
-
-            {/* Kochi */}
-            <div className="pt-4 md:pt-0 md:pl-6">
-              <h4 className="text-base sm:text-lg font-bold text-gray-900 mb-2 font-poppins">
-                Kochi
-              </h4>
-              <p className="text-xs sm:text-sm text-gray-600 leading-relaxed font-roboto">
-                Velleparambil House, Sastha Temple Road, Ernakulam – 682017, Kerala
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
 
       {/* ========================================================= */}
       {/* ENQUIRY MODAL (Interactive Popup)                          */}

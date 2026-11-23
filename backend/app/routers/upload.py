@@ -8,9 +8,9 @@ from app.config import PRODUCT_UPLOADS_DIR
 
 router = APIRouter(prefix="/api/admin", tags=["admin-upload"])
 
-ALLOWED_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp", ".gif"}
-ALLOWED_CONTENT_TYPES = {"image/jpeg", "image/png", "image/webp", "image/gif"}
-MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024  # 10 MB
+ALLOWED_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp", ".gif", ".pdf"}
+ALLOWED_CONTENT_TYPES = {"image/jpeg", "image/png", "image/webp", "image/gif", "application/pdf"}
+MAX_FILE_SIZE_BYTES = 20 * 1024 * 1024  # 20 MB
 
 
 async def _save_image_file(upload: UploadFile) -> str:
@@ -24,10 +24,12 @@ async def _save_image_file(upload: UploadFile) -> str:
             ext = ".webp"
         elif upload.content_type == "image/gif":
             ext = ".gif"
+        elif upload.content_type == "application/pdf":
+            ext = ".pdf"
         else:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Unsupported file type '{upload.filename}'. Allowed: jpg, jpeg, png, webp, gif.",
+                detail=f"Unsupported file type '{upload.filename}'. Allowed: jpg, jpeg, png, webp, gif, pdf.",
             )
 
     if upload.content_type and upload.content_type not in ALLOWED_CONTENT_TYPES:
