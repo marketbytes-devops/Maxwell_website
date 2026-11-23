@@ -5,9 +5,11 @@ from dotenv import load_dotenv
 BACKEND_DIR = Path(__file__).resolve().parent.parent
 ROOT_DIR = BACKEND_DIR.parent
 
-# Load .env from backend/.env first, then workspace root .env
+# Load .env from backend/.env first, then workspace root .env / .env.local
 load_dotenv(BACKEND_DIR / ".env")
+load_dotenv(BACKEND_DIR / ".env.local")
 load_dotenv(ROOT_DIR / ".env")
+load_dotenv(ROOT_DIR / ".env.local")
 
 DB_HOST = os.getenv("DB_HOST", "localhost")
 DB_PORT = int(os.getenv("DB_PORT", "3306"))

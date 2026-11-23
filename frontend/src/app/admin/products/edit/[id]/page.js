@@ -5,6 +5,7 @@ export const dynamic = "force-dynamic";
 import { useEffect, useState, useMemo, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import AiSpecScanner from "@/components/admin/AiSpecScanner";
 
 export default function EditProductPage() {
   const params = useParams();
@@ -273,6 +274,17 @@ export default function EditProductPage() {
 
   const removeSpecRow = (index) => {
     setSpecs(specs.filter((_, i) => i !== index));
+  };
+
+  // AI Spec Sheet Extractor Handler
+  const handleApplyExtractedSpecs = (data) => {
+    if (data.model_no && !modelNo) setModelNo(data.model_no);
+    if (data.name) setProductName(data.name);
+    if (data.description) setDescription(data.description);
+    if (data.tags) setTags(data.tags);
+    if (data.specs && Array.isArray(data.specs) && data.specs.length > 0) {
+      setSpecs(data.specs.map((s) => ({ key: s.key || "", value: s.value || "" })));
+    }
   };
 
   // Submit Update
@@ -599,6 +611,13 @@ export default function EditProductPage() {
           <h3 className="font-semibold text-gray-800 text-sm border-b border-gray-100 pb-2">
             3. Basic Product Information
           </h3>
+
+          {/* AI Specification Table Scanner & Visual Reference */}
+          <AiSpecScanner
+            title="Scan & Auto-Fill from Spec Sheet Image"
+            currentModelNo={modelNo}
+            onApplyData={handleApplyExtractedSpecs}
+          />
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>

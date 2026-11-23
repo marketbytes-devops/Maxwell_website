@@ -5,6 +5,7 @@ export const dynamic = "force-dynamic";
 import { useEffect, useState, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import AiSpecScanner from "@/components/admin/AiSpecScanner";
 
 const DEFAULT_SPEC_KEYS = [
   "External Dimension (mm)",
@@ -172,6 +173,73 @@ export default function AddProductPage() {
   const removeProduct = (pIdx) => {
     if (productsList.length <= 1) return;
     setProductsList((prev) => prev.filter((_, i) => i !== pIdx));
+  };
+
+  // AI Extraction Handlers
+  const handleApplyExtractedSpecs = (pIdx, data) => {
+    setProductsList((prev) => {
+      const next = [...prev];
+      const current = next[pIdx];
+
+      const newModelNo = current.model_no || data.model_no || "";
+      const newName = current.name || data.name || (newModelNo ? `${newModelNo}` : "");
+      const newDesc = current.description || data.description || "";
+      const newTags = current.tags || data.tags || "";
+
+      let mergedSpecs = [];
+      if (data.specs && Array.isArray(data.specs) && data.specs.length > 0) {
+        mergedSpecs = data.specs.map((s) => ({
+          key: s.key || "",
+          value: s.value || "",
+        }));
+      } else {
+        mergedSpecs = current.specs;
+      }
+
+      next[pIdx] = {
+        ...current,
+        model_no: newModelNo,
+        name: newName,
+        description: newDesc,
+        tags: newTags,
+        specs: mergedSpecs,
+      };
+      return next;
+    });
+  };
+
+  const handleApplyAllModels = (pIdx, allModels, baseData) => {
+    if (!allModels || allModels.length === 0) return;
+
+    setProductsList((prev) => {
+      const next = [...prev];
+      const current = next[pIdx];
+
+      // Update current card with first model
+      const first = allModels[0];
+      next[pIdx] = {
+        ...current,
+        model_no: first.model_no || current.model_no,
+        name: first.name || current.name || first.model_no,
+        description: current.description || baseData.description || "",
+        tags: current.tags || baseData.tags || "",
+        specs: first.specs && first.specs.length > 0 ? first.specs : current.specs,
+      };
+
+      // Append remaining models as separate product cards
+      for (let i = 1; i < allModels.length; i++) {
+        const m = allModels[i];
+        const newProd = createEmptyProduct();
+        newProd.model_no = m.model_no || "";
+        newProd.name = m.name || m.model_no || "";
+        newProd.description = baseData.description || "";
+        newProd.tags = baseData.tags || "";
+        newProd.specs = m.specs && m.specs.length > 0 ? m.specs : current.specs.map((s) => ({ ...s, value: "" }));
+        next.push(newProd);
+      }
+
+      return next;
+    });
   };
 
   // Image Upload handler for specific product
@@ -564,6 +632,14 @@ export default function AddProductPage() {
               </div>
 
               <div className="p-6 space-y-6">
+                {/* AI Specification Table Scanner & Visual Reference */}
+                <AiSpecScanner
+                  title={product.model_no ? `Model ${product.model_no} - Spec Auto-Filler` : `Product #${pIdx + 1} - Spec Sheet Auto-Filler`}
+                  currentModelNo={product.model_no}
+                  onApplyData={(data) => handleApplyExtractedSpecs(pIdx, data)}
+                  onApplyAllModels={(allModels, baseData) => handleApplyAllModels(pIdx, allModels, baseData)}
+                />
+
                 {/* 2.1 Basic Product Info */}
                 <div className="space-y-3">
                   <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider">

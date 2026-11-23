@@ -5,7 +5,7 @@ from fastapi.staticfiles import StaticFiles
 
 from app.config import CORS_ORIGINS, UPLOADS_DIR
 from app.database import init_db
-from app.routers import admin_auth, admin_catalog, public, upload
+from app.routers import admin_auth, admin_catalog, ai_extractor, public, upload
 
 
 @asynccontextmanager
@@ -42,6 +42,7 @@ app.mount("/uploads", StaticFiles(directory=str(UPLOADS_DIR)), name="uploads")
 app.include_router(admin_auth.router)
 app.include_router(upload.router)
 app.include_router(admin_catalog.router)
+app.include_router(ai_extractor.router)
 app.include_router(public.router)
 
 
