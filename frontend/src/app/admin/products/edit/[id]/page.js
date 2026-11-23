@@ -635,30 +635,6 @@ export default function EditProductPage() {
 
             <div>
               <label className="block text-xs font-semibold text-gray-700 mb-1.5">
-                Product Title / Name
-              </label>
-              <input
-                type="text"
-                value={productName}
-                onChange={(e) => setProductName(e.target.value)}
-                className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#04940B]"
-              />
-            </div>
-
-            <div className="sm:col-span-2">
-              <label className="block text-xs font-semibold text-gray-700 mb-1.5">
-                Description
-              </label>
-              <textarea
-                rows={3}
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#04940B]"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-gray-700 mb-1.5">
                 Search Tags / Keywords
               </label>
               <input
@@ -669,7 +645,7 @@ export default function EditProductPage() {
               />
             </div>
 
-            <div>
+            <div className="sm:col-span-2">
               <label className="block text-xs font-semibold text-gray-700 mb-1.5 flex items-center justify-between">
                 <span>Brochure PDF Download URL</span>
                 <label className="text-[11px] text-[#04940B] hover:underline cursor-pointer font-medium">
