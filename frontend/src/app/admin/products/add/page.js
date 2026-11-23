@@ -700,12 +700,35 @@ export default function AddProductPage() {
                     </div>
 
                     <div>
-                      <label className="block text-xs font-semibold text-gray-700 mb-1.5">
-                        Brochure PDF URL
+                      <label className="block text-xs font-semibold text-gray-700 mb-1.5 flex items-center justify-between">
+                        <span>Brochure PDF URL</span>
+                        <label className="text-[11px] text-[#04940B] hover:underline cursor-pointer font-medium">
+                          Upload PDF from PC
+                          <input
+                            type="file"
+                            accept="application/pdf"
+                            className="hidden"
+                            onChange={async (e) => {
+                              const file = e.target.files?.[0];
+                              if (!file) return;
+                              const fd = new FormData();
+                              fd.append("file", file);
+                              try {
+                                const res = await fetch("/api/admin/upload", { method: "POST", body: fd });
+                                const data = await res.json();
+                                if (data.urls?.[0]) {
+                                  updateProductField(pIdx, "brochure_url", data.urls[0]);
+                                }
+                              } catch (err) {
+                                alert("Failed to upload PDF brochure");
+                              }
+                            }}
+                          />
+                        </label>
                       </label>
                       <input
                         type="text"
-                        placeholder="e.g. /brochures/spec_sheet.pdf"
+                        placeholder="e.g. /brochures/spec_sheet.pdf or click Upload PDF"
                         value={product.brochure_url}
                         onChange={(e) => updateProductField(pIdx, "brochure_url", e.target.value)}
                         className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#04940B]"
