@@ -344,9 +344,16 @@ export default function EditProductPage() {
         body: JSON.stringify(payload),
       });
 
-      const data = await res.json();
+      let data = {};
+      try {
+        data = await res.json();
+      } catch (parseErr) {
+        const text = await res.text().catch(() => "");
+        throw new Error(text || `Server error (${res.status})`);
+      }
+
       if (!res.ok) {
-        throw new Error(data.detail || data.error || "Failed to update product");
+        throw new Error(data.detail || data.error || data.message || "Failed to update product");
       }
 
       setSuccess(true);

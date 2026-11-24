@@ -264,7 +264,14 @@ export default function AddProductPage() {
         body: formData,
       });
 
-      const data = await res.json();
+      let data = {};
+      try {
+        data = await res.json();
+      } catch (parseErr) {
+        const text = await res.text().catch(() => "");
+        throw new Error(text || `Image upload failed (${res.status})`);
+      }
+
       if (!res.ok) {
         throw new Error(data.detail || data.error || "Image upload failed");
       }
@@ -442,9 +449,16 @@ export default function AddProductPage() {
         }),
       });
 
-      const data = await res.json();
+      let data = {};
+      try {
+        data = await res.json();
+      } catch (parseErr) {
+        const text = await res.text().catch(() => "");
+        throw new Error(text || `Server error (${res.status})`);
+      }
+
       if (!res.ok) {
-        throw new Error(data.detail || data.error || "Failed to create products");
+        throw new Error(data.detail || data.error || data.message || "Failed to create products");
       }
 
       setSuccess(true);

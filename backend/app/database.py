@@ -114,7 +114,7 @@ def _drop_global_unique_indexes_on_products(conn) -> None:
                 """
                 SELECT DISTINCT INDEX_NAME
                 FROM INFORMATION_SCHEMA.STATISTICS
-                WHERE TABLE_SCHEMA = :db_name
+                WHERE (TABLE_SCHEMA = DATABASE() OR TABLE_SCHEMA = :db_name)
                   AND TABLE_NAME = 'products'
                   AND NON_UNIQUE = 0
                   AND INDEX_NAME != 'PRIMARY'
@@ -125,9 +125,18 @@ def _drop_global_unique_indexes_on_products(conn) -> None:
         ).fetchall()
         for (index_name,) in rows:
             safe_idx = str(index_name).replace("`", "")
-            conn.execute(text(f"ALTER TABLE products DROP INDEX `{safe_idx}`"))
+            try:
+                conn.execute(text(f"ALTER TABLE products DROP INDEX `{safe_idx}`"))
+            except Exception:
+                pass
     except Exception as e:
         print(f"Warning dropping unique index on products: {e}")
+
+    # Directly attempt to drop 'model_no' index if it was created as standard UNIQUE KEY
+    try:
+        conn.execute(text("ALTER TABLE products DROP INDEX `model_no`"))
+    except Exception:
+        pass
 
 
 def seed_default_categories_for_brand(conn, brand_id: int) -> int:

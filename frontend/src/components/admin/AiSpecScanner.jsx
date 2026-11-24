@@ -129,7 +129,13 @@ export default function AiSpecScanner({
         body: formData,
       });
 
-      const result = await res.json();
+      let result = {};
+      try {
+        result = await res.json();
+      } catch (parseErr) {
+        const text = await res.text().catch(() => "");
+        throw new Error(text || `Server error (${res.status})`);
+      }
 
       if (!res.ok) {
         if (result.requires_key || res.status === 400 && result.detail?.toLowerCase().includes("key")) {

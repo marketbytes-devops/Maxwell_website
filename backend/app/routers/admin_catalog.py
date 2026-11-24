@@ -3,6 +3,7 @@ from typing import Any
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel, Field
 from sqlalchemy import text
+from sqlalchemy.exc import IntegrityError
 
 from app.auth import get_current_admin
 from app.category_utils import (
@@ -555,142 +556,161 @@ def create_product(payload: ProductCreate, _admin: dict = Depends(get_current_ad
     name = (payload.name or model_no).strip()
 
     engine = get_engine()
-    with engine.begin() as conn:
-        brand_name = payload.brand
-        brand_id = payload.brand_id
-        if brand_id and not brand_name:
-            b_row = conn.execute(text("SELECT name FROM brands WHERE id = :id"), {"id": brand_id}).fetchone()
-            if b_row:
-                brand_name = b_row[0]
+    try:
+        with engine.begin() as conn:
+            brand_name = payload.brand
+            brand_id = payload.brand_id
+            if brand_id and not brand_name:
+                b_row = conn.execute(text("SELECT name FROM brands WHERE id = :id"), {"id": brand_id}).fetchone()
+                if b_row:
+                    brand_name = b_row[0]
 
-        category_name = payload.category_name
-        category_id = payload.category_id
-        if category_id and not category_name:
-            c_row = conn.execute(text("SELECT name, brand_id FROM categories WHERE id = :id"), {"id": category_id}).fetchone()
-            if c_row:
-                category_name = c_row[0]
-                if not brand_id and c_row[1]:
-                    brand_id = c_row[1]
+            category_name = payload.category_name
+            category_id = payload.category_id
+            if category_id and not category_name:
+                c_row = conn.execute(text("SELECT name, brand_id FROM categories WHERE id = :id"), {"id": category_id}).fetchone()
+                if c_row:
+                    category_name = c_row[0]
+                    if not brand_id and c_row[1]:
+                        brand_id = c_row[1]
 
-        # Check duplicate model within the same brand and category (allow same model across different categories)
-        existing = conn.execute(
-            text(
-                """
-                SELECT id FROM products 
-                WHERE model_no = :model_no 
-                  AND (category_id = :category_id OR (category_id IS NULL AND :category_id IS NULL))
-                  AND (brand_id = :brand_id OR (brand_id IS NULL AND :brand_id IS NULL))
-                LIMIT 1
-                """
-            ),
-            {"model_no": model_no, "category_id": category_id, "brand_id": brand_id},
-        ).fetchone()
-        if existing:
-            cat_display = category_name or "this category"
-            raise HTTPException(
-                status_code=400,
-                detail=f"Product with model number '{model_no}' already exists in '{cat_display}'. If this model belongs to a different category or subcategory, please select that category.",
-            )
-
-        # Determine primary image URL
-        primary_image = payload.image_url or ""
-        normalized_images: list[dict] = []
-        for idx, img in enumerate(payload.images):
-            if isinstance(img, str):
-                url_str = img.strip()
-                if url_str:
-                    is_p = (idx == 0 and not primary_image) or (url_str == primary_image)
-                    normalized_images.append({"url": url_str, "is_primary": is_p, "display_order": idx + 1})
-            elif isinstance(img, dict):
-                url_str = img.get("url", "").strip()
-                if url_str:
-                    normalized_images.append({
-                        "url": url_str,
-                        "is_primary": bool(img.get("is_primary")),
-                        "display_order": int(img.get("display_order") or idx + 1),
-                    })
-            elif isinstance(img, ProductImageItem):
-                url_str = img.url.strip()
-                if url_str:
-                    normalized_images.append({
-                        "url": url_str,
-                        "is_primary": img.is_primary,
-                        "display_order": img.display_order or idx + 1,
-                    })
-
-        if not primary_image and normalized_images:
-            primary_image = normalized_images[0]["url"]
-            normalized_images[0]["is_primary"] = True
-
-        result = conn.execute(
-            text(
-                """
-                INSERT INTO products (
-                    model_no, name, brand_id, brand, category_id, category_name,
-                    description, tags, image_url, brochure_url, is_featured
-                )
-                VALUES (
-                    :model_no, :name, :brand_id, :brand, :category_id, :category_name,
-                    :description, :tags, :image_url, :brochure_url, :is_featured
-                )
-                """
-            ),
-            {
-                "model_no": model_no,
-                "name": name,
-                "brand_id": brand_id,
-                "brand": brand_name or "Maxsel",
-                "category_id": category_id,
-                "category_name": category_name or "General",
-                "description": payload.description or "",
-                "tags": payload.tags or "",
-                "image_url": primary_image,
-                "brochure_url": payload.brochure_url or "",
-                "is_featured": 1 if payload.is_featured else 0,
-            },
-        )
-        product_id = result.lastrowid
-
-        # Insert images
-        for im in normalized_images:
-            conn.execute(
+            # Check duplicate model within the same brand and category (allow same model across different categories)
+            existing = conn.execute(
                 text(
                     """
-                    INSERT INTO product_images (product_id, image_url, is_primary, display_order)
-                    VALUES (:pid, :url, :is_p, :ord)
+                    SELECT id FROM products 
+                    WHERE model_no = :model_no 
+                      AND (category_id = :category_id OR (category_id IS NULL AND :category_id IS NULL))
+                      AND (brand_id = :brand_id OR (brand_id IS NULL AND :brand_id IS NULL))
+                    LIMIT 1
+                    """
+                ),
+                {"model_no": model_no, "category_id": category_id, "brand_id": brand_id},
+            ).fetchone()
+            if existing:
+                cat_display = category_name or "this category"
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Product with model number '{model_no}' already exists in '{cat_display}'. If this model belongs to a different category or subcategory, please select that category.",
+                )
+
+            # Determine primary image URL
+            primary_image = payload.image_url or ""
+            normalized_images: list[dict] = []
+            for idx, img in enumerate(payload.images):
+                if isinstance(img, str):
+                    url_str = img.strip()
+                    if url_str:
+                        is_p = (idx == 0 and not primary_image) or (url_str == primary_image)
+                        normalized_images.append({"url": url_str, "is_primary": is_p, "display_order": idx + 1})
+                elif isinstance(img, dict):
+                    url_str = img.get("url", "").strip()
+                    if url_str:
+                        normalized_images.append({
+                            "url": url_str,
+                            "is_primary": bool(img.get("is_primary")),
+                            "display_order": int(img.get("display_order") or idx + 1),
+                        })
+                elif isinstance(img, ProductImageItem):
+                    url_str = img.url.strip()
+                    if url_str:
+                        normalized_images.append({
+                            "url": url_str,
+                            "is_primary": img.is_primary,
+                            "display_order": img.display_order or idx + 1,
+                        })
+
+            if not primary_image and normalized_images:
+                primary_image = normalized_images[0]["url"]
+                normalized_images[0]["is_primary"] = True
+
+            result = conn.execute(
+                text(
+                    """
+                    INSERT INTO products (
+                        model_no, name, brand_id, brand, category_id, category_name,
+                        description, tags, image_url, brochure_url, is_featured
+                    )
+                    VALUES (
+                        :model_no, :name, :brand_id, :brand, :category_id, :category_name,
+                        :description, :tags, :image_url, :brochure_url, :is_featured
+                    )
                     """
                 ),
                 {
-                    "pid": product_id,
-                    "url": im["url"],
-                    "is_p": 1 if im["is_primary"] else 0,
-                    "ord": im["display_order"],
+                    "model_no": model_no,
+                    "name": name,
+                    "brand_id": brand_id,
+                    "brand": brand_name or "Maxsel",
+                    "category_id": category_id,
+                    "category_name": category_name or "General",
+                    "description": payload.description or "",
+                    "tags": payload.tags or "",
+                    "image_url": primary_image,
+                    "brochure_url": payload.brochure_url or "",
+                    "is_featured": 1 if payload.is_featured else 0,
                 },
             )
+            product_id = result.lastrowid
 
-        # Insert specifications
-        for idx, spec in enumerate(payload.specifications, start=1):
-            if isinstance(spec, dict):
-                k = (spec.get("key") or spec.get("spec_key") or "").strip()
-                v = (spec.get("value") or spec.get("spec_value") or "").strip()
-            elif isinstance(spec, ProductSpecItem):
-                k = spec.key.strip()
-                v = spec.value.strip()
-            else:
-                k, v = "", ""
-
-            if k and v:
+            # Insert images
+            for im in normalized_images:
                 conn.execute(
                     text(
                         """
-                        INSERT INTO product_specifications (product_id, spec_key, spec_value, display_order)
-                        VALUES (:pid, :key, :val, :ord)
+                        INSERT INTO product_images (product_id, image_url, is_primary, display_order)
+                        VALUES (:pid, :url, :is_p, :ord)
                         """
                     ),
-                    {"pid": product_id, "key": k, "val": v, "ord": idx},
+                    {
+                        "pid": product_id,
+                        "url": im["url"],
+                        "is_p": 1 if im["is_primary"] else 0,
+                        "ord": im["display_order"],
+                    },
                 )
 
-    return {"success": True, "product_id": product_id, "model_no": model_no}
+            # Insert specifications
+            for idx, spec in enumerate(payload.specifications, start=1):
+                if isinstance(spec, dict):
+                    k = (spec.get("key") or spec.get("spec_key") or "").strip()
+                    v = (spec.get("value") or spec.get("spec_value") or "").strip()
+                elif isinstance(spec, ProductSpecItem):
+                    k = spec.key.strip()
+                    v = spec.value.strip()
+                else:
+                    k, v = "", ""
+
+                if k and v:
+                    conn.execute(
+                        text(
+                            """
+                            INSERT INTO product_specifications (product_id, spec_key, spec_value, display_order)
+                            VALUES (:pid, :key, :val, :ord)
+                            """
+                        ),
+                        {"pid": product_id, "key": k, "val": v, "ord": idx},
+                    )
+
+        return {"success": True, "product_id": product_id, "model_no": model_no}
+    except HTTPException:
+        raise
+    except IntegrityError as exc:
+        err_str = str(exc)
+        if "Duplicate entry" in err_str and "model_no" in err_str:
+            # Drop leftover unique index if present on database
+            try:
+                with engine.begin() as drop_conn:
+                    drop_conn.execute(text("ALTER TABLE products DROP INDEX `model_no`"))
+            except Exception:
+                pass
+            raise HTTPException(
+                status_code=400,
+                detail=f"Model number '{model_no}' already exists in this database. Unique index dropped - please click save again.",
+            )
+        raise HTTPException(status_code=400, detail=f"Database constraint error: {err_str}")
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Failed to create product: {str(exc)}")
 
 
 @router.get("/products/{product_id}")
@@ -882,21 +902,26 @@ def create_products_batch(payload: BatchProductCreate, _admin: dict = Depends(ge
         raise HTTPException(status_code=400, detail="No products provided")
 
     created_ids = []
-    for item in payload.products:
-        # Inherit batch brand and category if missing
-        if not item.brand_id:
-            item.brand_id = payload.brand_id
-        if not item.brand and payload.brand:
-            item.brand = payload.brand
-        if not item.category_id:
-            item.category_id = payload.category_id
-        if not item.category_name and payload.category_name:
-            item.category_name = payload.category_name
+    try:
+        for item in payload.products:
+            # Inherit batch brand and category if missing
+            if not item.brand_id:
+                item.brand_id = payload.brand_id
+            if not item.brand and payload.brand:
+                item.brand = payload.brand
+            if not item.category_id:
+                item.category_id = payload.category_id
+            if not item.category_name and payload.category_name:
+                item.category_name = payload.category_name
 
-        res = create_product(item, _admin=_admin)
-        created_ids.append(res["product_id"])
+            res = create_product(item, _admin=_admin)
+            created_ids.append(res["product_id"])
 
-    return {"success": True, "created_count": len(created_ids), "product_ids": created_ids}
+        return {"success": True, "created_count": len(created_ids), "product_ids": created_ids}
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Batch product creation failed: {str(exc)}")
 
 
 @router.delete("/products/{product_id}")
