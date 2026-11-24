@@ -107,6 +107,29 @@ def _drop_global_unique_indexes_on_categories(conn) -> None:
         conn.execute(text(f"ALTER TABLE categories DROP INDEX `{safe_idx}`"))
 
 
+def _drop_global_unique_indexes_on_products(conn) -> None:
+    try:
+        rows = conn.execute(
+            text(
+                """
+                SELECT DISTINCT INDEX_NAME
+                FROM INFORMATION_SCHEMA.STATISTICS
+                WHERE TABLE_SCHEMA = :db_name
+                  AND TABLE_NAME = 'products'
+                  AND NON_UNIQUE = 0
+                  AND INDEX_NAME != 'PRIMARY'
+                  AND COLUMN_NAME = 'model_no'
+                """
+            ),
+            {"db_name": DB_NAME},
+        ).fetchall()
+        for (index_name,) in rows:
+            safe_idx = str(index_name).replace("`", "")
+            conn.execute(text(f"ALTER TABLE products DROP INDEX `{safe_idx}`"))
+    except Exception as e:
+        print(f"Warning dropping unique index on products: {e}")
+
+
 def seed_default_categories_for_brand(conn, brand_id: int) -> int:
     inserted = 0
     for idx, cat in enumerate(DEFAULT_13_CATEGORIES, start=1):
@@ -222,7 +245,7 @@ def init_db(force: bool = False) -> None:
                     """
                     CREATE TABLE IF NOT EXISTS products (
                         id INT AUTO_INCREMENT PRIMARY KEY,
-                        model_no VARCHAR(100) NOT NULL UNIQUE,
+                        model_no VARCHAR(100) NOT NULL,
                         name VARCHAR(255) NOT NULL,
                         brand_id INT DEFAULT NULL,
                         brand VARCHAR(100) DEFAULT 'Maxsel',
@@ -235,6 +258,7 @@ def init_db(force: bool = False) -> None:
                         is_featured BOOLEAN DEFAULT FALSE,
                         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                        INDEX idx_products_model_no (model_no),
                         INDEX idx_products_brand_id (brand_id),
                         INDEX idx_products_category_id (category_id)
                     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
@@ -247,6 +271,13 @@ def init_db(force: bool = False) -> None:
                 conn.execute(text("ALTER TABLE products ADD INDEX idx_products_brand_id (brand_id)"))
             if not _column_exists(conn, "products", "description"):
                 conn.execute(text("ALTER TABLE products ADD COLUMN description TEXT AFTER category_name"))
+
+            # Migrate existing tables: drop any legacy global unique constraint on model_no
+            _drop_global_unique_indexes_on_products(conn)
+            try:
+                conn.execute(text("ALTER TABLE products ADD INDEX idx_products_model_no (model_no)"))
+            except Exception:
+                pass
 
             conn.execute(
                 text(

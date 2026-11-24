@@ -556,15 +556,6 @@ def create_product(payload: ProductCreate, _admin: dict = Depends(get_current_ad
 
     engine = get_engine()
     with engine.begin() as conn:
-        # Check duplicate model
-        existing = conn.execute(
-            text("SELECT id FROM products WHERE model_no = :model_no"), {"model_no": model_no}
-        ).fetchone()
-        if existing:
-            raise HTTPException(
-                status_code=400, detail=f"Product with model number '{model_no}' already exists"
-            )
-
         brand_name = payload.brand
         brand_id = payload.brand_id
         if brand_id and not brand_name:
@@ -580,6 +571,26 @@ def create_product(payload: ProductCreate, _admin: dict = Depends(get_current_ad
                 category_name = c_row[0]
                 if not brand_id and c_row[1]:
                     brand_id = c_row[1]
+
+        # Check duplicate model within the same brand and category (allow same model across different categories)
+        existing = conn.execute(
+            text(
+                """
+                SELECT id FROM products 
+                WHERE model_no = :model_no 
+                  AND (category_id = :category_id OR (category_id IS NULL AND :category_id IS NULL))
+                  AND (brand_id = :brand_id OR (brand_id IS NULL AND :brand_id IS NULL))
+                LIMIT 1
+                """
+            ),
+            {"model_no": model_no, "category_id": category_id, "brand_id": brand_id},
+        ).fetchone()
+        if existing:
+            cat_display = category_name or "this category"
+            raise HTTPException(
+                status_code=400,
+                detail=f"Product with model number '{model_no}' already exists in '{cat_display}'. If this model belongs to a different category or subcategory, please select that category.",
+            )
 
         # Determine primary image URL
         primary_image = payload.image_url or ""
@@ -717,17 +728,6 @@ def update_product(product_id: int, payload: ProductUpdate, _admin: dict = Depen
         if not existing:
             raise HTTPException(status_code=404, detail="Product not found")
 
-        model_no = payload.model_no.strip() if payload.model_no else ""
-        if model_no:
-            dup = conn.execute(
-                text("SELECT id FROM products WHERE model_no = :model_no AND id != :id"),
-                {"model_no": model_no, "id": product_id},
-            ).fetchone()
-            if dup:
-                raise HTTPException(
-                    status_code=400, detail=f"Product with model number '{model_no}' already exists"
-                )
-
         brand_name = payload.brand
         brand_id = payload.brand_id
         if brand_id and not brand_name:
@@ -743,6 +743,28 @@ def update_product(product_id: int, payload: ProductUpdate, _admin: dict = Depen
                 category_name = c_row[0]
                 if not brand_id and c_row[1]:
                     brand_id = c_row[1]
+
+        model_no = payload.model_no.strip() if payload.model_no else ""
+        if model_no:
+            dup = conn.execute(
+                text(
+                    """
+                    SELECT id FROM products 
+                    WHERE model_no = :model_no 
+                      AND (category_id = :category_id OR (category_id IS NULL AND :category_id IS NULL))
+                      AND (brand_id = :brand_id OR (brand_id IS NULL AND :brand_id IS NULL))
+                      AND id != :id
+                    LIMIT 1
+                    """
+                ),
+                {"model_no": model_no, "category_id": category_id, "brand_id": brand_id, "id": product_id},
+            ).fetchone()
+            if dup:
+                cat_display = category_name or "this category"
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Product with model number '{model_no}' already exists in '{cat_display}'.",
+                )
 
         primary_image = payload.image_url or ""
         normalized_images: list[dict] = []

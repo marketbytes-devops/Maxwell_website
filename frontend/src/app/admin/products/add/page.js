@@ -376,13 +376,23 @@ export default function AddProductPage() {
       return;
     }
 
-    // Validate that every product has a model number
+    // Validate that every product has a model number and no duplicates within the same batch
+    const seenModels = new Set();
     for (let i = 0; i < productsList.length; i++) {
       const p = productsList[i];
-      if (!p.model_no.trim()) {
+      const m = p.model_no.trim();
+      if (!m) {
         setError(`Product #${i + 1} is missing a Model Number. Please fill it before saving.`);
         return;
       }
+      const lowerM = m.toLowerCase();
+      if (seenModels.has(lowerM)) {
+        setError(
+          `Duplicate model number '${m}' in Product #${i + 1}. Within the same category, each product must have a distinct model number.`
+        );
+        return;
+      }
+      seenModels.add(lowerM);
     }
 
     setSaving(true);
