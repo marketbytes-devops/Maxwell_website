@@ -202,23 +202,11 @@ export default function ProductDetailPage({ params }) {
           <div className="lg:col-span-6 flex flex-col justify-start">
             {/* Product Model Heading (e.g. F450GL23) */}
             <h1
-              className="text-3xl sm:text-4xl lg:text-[42px] font-bold text-[#1F2937] tracking-tight leading-tight mb-2"
+              className="text-3xl sm:text-4xl lg:text-[42px] font-bold text-[#1F2937] tracking-tight leading-tight mb-4"
               style={{ fontFamily: "'Roboto', sans-serif" }}
             >
               {product.model_no || product.name}
             </h1>
-
-            {product.name && product.name !== product.model_no && (
-              <p className="text-base text-gray-500 font-medium mb-3">
-                {product.name}
-              </p>
-            )}
-
-            {product.description && (
-              <p className="text-sm text-gray-600 leading-relaxed mb-4 bg-gray-50 p-3.5 rounded-xl border border-gray-100">
-                {product.description}
-              </p>
-            )}
 
             {/* Subheading: Product Specification */}
             <h2

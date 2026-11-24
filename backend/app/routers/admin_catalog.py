@@ -484,38 +484,68 @@ def get_admin_products(
     brand_id: int | None = Query(default=None),
     category_id: int | None = Query(default=None),
     search: str | None = Query(default=None),
+    model_no: str | None = Query(default=None),
+    page: int = Query(default=1, ge=1),
+    limit: int = Query(default=15, ge=1, le=200),
     _admin: dict = Depends(get_current_admin),
 ):
     init_db()
     engine = get_engine()
     with engine.connect() as conn:
-        sql = """
-            SELECT p.id, p.model_no, p.name, p.brand_id, p.brand, p.category_id, p.category_name,
-                   p.description, p.tags, p.image_url, p.brochure_url, p.is_featured, p.created_at
-            FROM products p
-            WHERE 1=1
-        """
+        where_clauses = ["1=1"]
         params: dict[str, Any] = {}
 
         if brand_id:
-            sql += " AND p.brand_id = :brand_id"
+            where_clauses.append("p.brand_id = :brand_id")
             params["brand_id"] = brand_id
 
         if category_id:
             cat_ids = get_descendant_category_ids(conn, category_id)
             if cat_ids:
                 in_clause = ",".join(str(cid) for cid in cat_ids)
-                sql += f" AND p.category_id IN ({in_clause})"
+                where_clauses.append(f"p.category_id IN ({in_clause})")
+
+        if model_no and model_no.strip():
+            where_clauses.append("p.model_no LIKE :model_no")
+            params["model_no"] = f"%{model_no.strip()}%"
 
         if search and search.strip():
-            sql += " AND (p.model_no LIKE :search OR p.name LIKE :search OR p.tags LIKE :search)"
+            where_clauses.append(
+                "(p.model_no LIKE :search OR p.name LIKE :search OR p.tags LIKE :search OR p.brand LIKE :search OR p.category_name LIKE :search)"
+            )
             params["search"] = f"%{search.strip()}%"
 
-        sql += " ORDER BY p.id DESC"
-        rows = conn.execute(text(sql), params).mappings().all()
+        where_sql = " AND ".join(where_clauses)
+
+        # Count total matching rows
+        count_sql = f"SELECT COUNT(*) FROM products p WHERE {where_sql}"
+        total_count = conn.execute(text(count_sql), params).scalar() or 0
+
+        # Paginated query
+        import math
+        total_pages = math.ceil(total_count / limit) if total_count > 0 else 1
+        offset = (page - 1) * limit
+
+        sql = f"""
+            SELECT p.id, p.model_no, p.name, p.brand_id, p.brand, p.category_id, p.category_name,
+                   p.description, p.tags, p.image_url, p.brochure_url, p.is_featured, p.created_at
+            FROM products p
+            WHERE {where_sql}
+            ORDER BY p.id DESC
+            LIMIT :limit OFFSET :offset
+        """
+        paginated_params = {**params, "limit": limit, "offset": offset}
+        rows = conn.execute(text(sql), paginated_params).mappings().all()
         products = attach_product_details(conn, [dict(r) for r in rows])
 
-    return {"success": True, "products": products, "total": len(products)}
+    return {
+        "success": True,
+        "products": products,
+        "total": total_count,
+        "page": page,
+        "limit": limit,
+        "total_pages": total_pages,
+    }
 
 
 @router.post("/products")

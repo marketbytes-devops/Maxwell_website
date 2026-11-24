@@ -681,8 +681,8 @@ export default function ProductsPage() {
                                   </div>
                                   <div className="flex-1 min-w-0">
                                     <div className="flex items-center gap-1.5">
-                                      <p className="text-xs sm:text-sm font-medium text-gray-900 truncate group-hover:text-[#04940B] transition-colors">
-                                        {p.name || p.model_no}
+                                      <p className="text-xs sm:text-sm font-bold text-gray-900 truncate group-hover:text-[#04940B] transition-colors">
+                                        {p.model_no || p.name}
                                       </p>
                                     </div>
                                     <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
@@ -890,10 +890,10 @@ export default function ProductsPage() {
                         className="block cursor-pointer group"
                       >
                         <h3
-                          className="font-medium text-[22px] text-[#323334] group-hover:text-[#04940B] transition-colors leading-[100%] line-clamp-1"
+                          className="font-bold text-[22px] text-[#323334] group-hover:text-[#04940B] transition-colors leading-[100%] line-clamp-1"
                           style={{ fontFamily: "'Roboto', sans-serif" }}
                         >
-                          {product.name || product.model_no}
+                          {product.model_no || product.name}
                         </h3>
                         {product.brand && (
                           <span className="text-xs text-gray-400 font-medium uppercase tracking-wider block mt-1">

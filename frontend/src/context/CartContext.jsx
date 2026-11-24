@@ -58,7 +58,7 @@ export function CartProvider({ children }) {
       // Add new item
       const newItem = {
         id: product.id,
-        name: product.name || "Product",
+        name: product.model_no || product.name || "Product",
         model_no: product.model_no || "",
         category_name: product.category_name || "Commercial Equipment",
         image_url: product.image_url || "/products/velvet_covered_clean.png",

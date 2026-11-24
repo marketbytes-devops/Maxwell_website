@@ -2,34 +2,137 @@
 
 export const dynamic = "force-dynamic";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import Link from "next/link";
 
 export default function AdminDashboardPage() {
-  const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [searchTerm, setSearchTerm] = useState("");
+  const [stats, setStats] = useState(null);
+  const [brands, setBrands] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [loadingStats, setLoadingStats] = useState(true);
+
+  // Products table & pagination state
+  const [products, setProducts] = useState([]);
+  const [totalProducts, setTotalProducts] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(15);
+  const [loadingProducts, setLoadingProducts] = useState(true);
   const [deletingId, setDeletingId] = useState(null);
 
-  const fetchDashboardData = async () => {
-    try {
-      setLoading(true);
-      const res = await fetch("/api/admin/dashboard");
-      if (!res.ok) throw new Error("Failed to load dashboard data");
-      const json = await res.json();
-      setData(json);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Filter states
+  const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [modelNoFilter, setModelNoFilter] = useState("");
+  const [debouncedModelNo, setDebouncedModelNo] = useState("");
+  const [selectedBrandId, setSelectedBrandId] = useState("");
+  const [selectedCategoryId, setSelectedCategoryId] = useState("");
 
+  const searchTimerRef = useRef(null);
+  const modelTimerRef = useRef(null);
+
+  // 1. Load high-level stats & brands on mount
   useEffect(() => {
-    fetchDashboardData();
+    async function loadInitial() {
+      try {
+        setLoadingStats(true);
+        const [dashRes, brandsRes] = await Promise.all([
+          fetch("/api/admin/dashboard"),
+          fetch("/api/admin/brands"),
+        ]);
+
+        if (dashRes.ok) {
+          const dashData = await dashRes.json();
+          setStats(dashData.stats || null);
+        }
+
+        if (brandsRes.ok) {
+          const brandsData = await brandsRes.json();
+          setBrands(brandsData.brands || []);
+        }
+      } catch (err) {
+        console.error("Failed to load dashboard initial data:", err);
+      } finally {
+        setLoadingStats(false);
+      }
+    }
+    loadInitial();
   }, []);
 
+  // 2. Load categories when selectedBrandId changes
+  useEffect(() => {
+    async function loadCategories() {
+      if (!selectedBrandId) {
+        setCategories([]);
+        setSelectedCategoryId("");
+        return;
+      }
+      try {
+        const res = await fetch(`/api/admin/categories?brand_id=${selectedBrandId}`);
+        if (res.ok) {
+          const data = await res.json();
+          setCategories(data.categories || []);
+        }
+      } catch (err) {
+        console.error("Failed to load categories:", err);
+      }
+    }
+    loadCategories();
+  }, [selectedBrandId]);
+
+  // Debounce search input
+  const handleSearchChange = (val) => {
+    setSearchTerm(val);
+    if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
+    searchTimerRef.current = setTimeout(() => {
+      setDebouncedSearch(val);
+      setPage(1);
+    }, 300);
+  };
+
+  // Debounce model number input
+  const handleModelNoChange = (val) => {
+    setModelNoFilter(val);
+    if (modelTimerRef.current) clearTimeout(modelTimerRef.current);
+    modelTimerRef.current = setTimeout(() => {
+      setDebouncedModelNo(val);
+      setPage(1);
+    }, 300);
+  };
+
+  // 3. Fetch paginated & filtered products
+  const fetchProducts = useCallback(async () => {
+    try {
+      setLoadingProducts(true);
+      const params = new URLSearchParams({
+        page: String(page),
+        limit: String(limit),
+      });
+
+      if (debouncedSearch.trim()) params.append("search", debouncedSearch.trim());
+      if (debouncedModelNo.trim()) params.append("model_no", debouncedModelNo.trim());
+      if (selectedBrandId) params.append("brand_id", selectedBrandId);
+      if (selectedCategoryId) params.append("category_id", selectedCategoryId);
+
+      const res = await fetch(`/api/admin/products?${params.toString()}`);
+      if (!res.ok) throw new Error("Failed to load products");
+      const data = await res.json();
+
+      setProducts(data.products || []);
+      setTotalProducts(data.total || 0);
+      setTotalPages(data.total_pages || 1);
+    } catch (err) {
+      console.error("Error fetching products:", err);
+    } finally {
+      setLoadingProducts(false);
+    }
+  }, [page, limit, debouncedSearch, debouncedModelNo, selectedBrandId, selectedCategoryId]);
+
+  useEffect(() => {
+    fetchProducts();
+  }, [fetchProducts]);
+
+  // Handle Delete Product
   const handleDelete = async (id, model) => {
     if (!confirm(`Are you sure you want to delete product "${model}"?`)) return;
 
@@ -37,7 +140,10 @@ export default function AdminDashboardPage() {
       setDeletingId(id);
       const res = await fetch(`/api/admin/products/${id}`, { method: "DELETE" });
       if (!res.ok) throw new Error("Failed to delete product");
-      await fetchDashboardData();
+      await fetchProducts();
+
+      // Refresh total count in stats
+      setStats((prev) => (prev ? { ...prev, totalProducts: Math.max(0, prev.totalProducts - 1) } : prev));
     } catch (err) {
       alert(err.message);
     } finally {
@@ -45,41 +151,37 @@ export default function AdminDashboardPage() {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="flex flex-col items-center justify-center py-20 text-gray-500 font-poppins">
-        <div className="w-8 h-8 border-3 border-[#04940B] border-t-transparent rounded-full animate-spin mb-3" />
-        <p className="text-sm">Loading catalog...</p>
-      </div>
-    );
-  }
+  // Reset all filters
+  const handleResetFilters = () => {
+    setSearchTerm("");
+    setDebouncedSearch("");
+    setModelNoFilter("");
+    setDebouncedModelNo("");
+    setSelectedBrandId("");
+    setSelectedCategoryId("");
+    setPage(1);
+  };
 
-  if (error) {
-    return (
-      <div className="p-6 bg-red-50 border border-red-200 rounded-2xl text-red-700 max-w-xl">
-        <p className="font-semibold text-sm">Unable to load dashboard</p>
-        <p className="text-xs mt-1">{error}</p>
-        <button
-          onClick={fetchDashboardData}
-          className="mt-3 px-4 py-1.5 bg-red-600 text-white rounded-lg text-xs font-medium hover:bg-red-700"
-        >
-          Try Again
-        </button>
-      </div>
-    );
-  }
+  const hasActiveFilters = Boolean(
+    searchTerm || modelNoFilter || selectedBrandId || selectedCategoryId
+  );
 
-  const { stats, categories = [], recentProducts = [] } = data || {};
+  // Pagination page pills helper (shows current page and adjacent pages)
+  const getPageNumbers = () => {
+    const pages = [];
+    const maxButtons = 5;
+    let start = Math.max(1, page - 2);
+    let end = Math.min(totalPages, start + maxButtons - 1);
 
-  const filteredProducts = recentProducts.filter((p) => {
-    return (
-      searchTerm === "" ||
-      p.model_no.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (p.category_name && p.category_name.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      (p.brand && p.brand.toLowerCase().includes(searchTerm.toLowerCase()))
-    );
-  });
+    if (end - start < maxButtons - 1) {
+      start = Math.max(1, end - maxButtons + 1);
+    }
+
+    for (let i = start; i <= end; i++) {
+      pages.push(i);
+    }
+    return pages;
+  };
 
   return (
     <div className="space-y-6 font-poppins max-w-7xl">
@@ -92,7 +194,7 @@ export default function AdminDashboardPage() {
               Total Products
             </p>
             <h3 className="text-2xl font-bold text-[#0F172A] mt-1">
-              {stats?.totalProducts || 0}
+              {stats?.totalProducts ?? totalProducts ?? 0}
             </h3>
           </div>
           <div className="w-11 h-11 rounded-xl bg-emerald-50 text-[#04940B] flex items-center justify-center font-bold">
@@ -111,7 +213,7 @@ export default function AdminDashboardPage() {
               Brands
             </p>
             <h3 className="text-2xl font-bold text-[#0F172A] mt-1">
-              {stats?.totalBrands || 0}
+              {stats?.totalBrands ?? brands.length ?? 0}
             </h3>
           </div>
           <Link
@@ -168,72 +270,201 @@ export default function AdminDashboardPage() {
 
       {/* Products Table Card */}
       <div className="bg-white rounded-2xl border border-gray-200 shadow-xs overflow-hidden">
-        {/* Table Controls */}
-        <div className="p-5 border-b border-gray-100 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-          <div>
-            <h3 className="font-semibold text-gray-800 text-base">
-              Products List
-            </h3>
-            <p className="text-xs text-gray-400 mt-0.5">
-              {filteredProducts.length} product{filteredProducts.length === 1 ? "" : "s"} found
-            </p>
+        {/* Table Header & Multi-Filter Toolbar */}
+        <div className="p-5 border-b border-gray-100 space-y-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <div>
+              <h3 className="font-semibold text-gray-800 text-base">
+                Product Catalog Management
+              </h3>
+              <p className="text-xs text-gray-400 mt-0.5">
+                {totalProducts} product{totalProducts === 1 ? "" : "s"} found {hasActiveFilters && "(Filtered)"}
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2">
+              {hasActiveFilters && (
+                <button
+                  type="button"
+                  onClick={handleResetFilters}
+                  className="text-xs text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 border border-red-200 px-3 py-1.5 rounded-xl transition cursor-pointer font-medium"
+                >
+                  ✕ Reset Filters
+                </button>
+              )}
+
+              <Link
+                href="/admin/products/add"
+                className="bg-[#04940B] hover:bg-[#037A09] text-white text-xs font-semibold px-4 py-2 rounded-xl flex items-center gap-1 whitespace-nowrap shadow-xs"
+              >
+                + Add Product
+              </Link>
+            </div>
           </div>
 
-          <div className="flex items-center gap-3">
-            <div className="relative w-full sm:w-64">
+          {/* Multi-Field Filters Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-1">
+            {/* 1. Global Search (Model, Brand, Category, Specs, Tags) */}
+            <div className="relative">
               <input
                 type="text"
-                placeholder="Search products..."
+                placeholder="Search all fields..."
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-9 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-[#04940B]"
+                onChange={(e) => handleSearchChange(e.target.value)}
+                className="w-full pl-9 pr-7 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-[#04940B]"
               />
               <svg className="absolute left-3 top-2.5 text-gray-400" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <circle cx="11" cy="11" r="8"></circle>
                 <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
               </svg>
+              {searchTerm && (
+                <button
+                  type="button"
+                  onClick={() => handleSearchChange("")}
+                  className="absolute right-2.5 top-2.5 text-gray-400 hover:text-gray-600 text-xs font-bold"
+                >
+                  ✕
+                </button>
+              )}
             </div>
 
-            <Link
-              href="/admin/products/add"
-              className="bg-[#04940B] hover:bg-[#037A09] text-white text-xs font-semibold px-4 py-2 rounded-xl flex items-center gap-1 whitespace-nowrap shadow-xs"
-            >
-              + Add Product
-            </Link>
+            {/* 2. Specific Model Number Filter */}
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Filter by Model No..."
+                value={modelNoFilter}
+                onChange={(e) => handleModelNoChange(e.target.value)}
+                className="w-full pl-3 pr-7 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-[#04940B]"
+              />
+              {modelNoFilter && (
+                <button
+                  type="button"
+                  onClick={() => handleModelNoChange("")}
+                  className="absolute right-2.5 top-2.5 text-gray-400 hover:text-gray-600 text-xs font-bold"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+
+            {/* 3. Filter by Brand */}
+            <div>
+              <select
+                value={selectedBrandId}
+                onChange={(e) => {
+                  setSelectedBrandId(e.target.value);
+                  setSelectedCategoryId("");
+                  setPage(1);
+                }}
+                className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-[#04940B]"
+              >
+                <option value="">All Brands</option>
+                {brands.map((b) => (
+                  <option key={b.id} value={b.id}>
+                    {b.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* 4. Filter by Category */}
+            <div>
+              <select
+                value={selectedCategoryId}
+                onChange={(e) => {
+                  setSelectedCategoryId(e.target.value);
+                  setPage(1);
+                }}
+                disabled={!selectedBrandId || categories.length === 0}
+                className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-[#04940B] disabled:opacity-50"
+              >
+                <option value="">
+                  {!selectedBrandId ? "Select a Brand first" : "All Categories"}
+                </option>
+                {categories.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {/* Rows Per Page selector bar */}
+          <div className="flex items-center justify-between text-xs text-gray-500 pt-1">
+            <div className="flex items-center gap-2">
+              <span>Show per page:</span>
+              {[10, 15, 25, 50].map((num) => (
+                <button
+                  key={num}
+                  type="button"
+                  onClick={() => {
+                    setLimit(num);
+                    setPage(1);
+                  }}
+                  className={`px-2 py-0.5 rounded-md font-semibold cursor-pointer transition ${
+                    limit === num
+                      ? "bg-[#04940B] text-white"
+                      : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                  }`}
+                >
+                  {num}
+                </button>
+              ))}
+            </div>
+
+            {totalProducts > 0 && (
+              <span>
+                Showing <strong className="text-gray-800">{(page - 1) * limit + 1}</strong> to{" "}
+                <strong className="text-gray-800">{Math.min(page * limit, totalProducts)}</strong> of{" "}
+                <strong className="text-gray-800">{totalProducts}</strong> products
+              </span>
+            )}
           </div>
         </div>
 
-        {/* Table */}
-        <div className="overflow-x-auto">
+        {/* Table Content */}
+        <div className="overflow-x-auto relative">
+          {loadingProducts && (
+            <div className="absolute inset-0 bg-white/70 backdrop-blur-2xs z-10 flex items-center justify-center">
+              <div className="flex items-center gap-2 text-xs font-semibold text-[#04940B]">
+                <div className="w-5 h-5 border-2 border-[#04940B] border-t-transparent rounded-full animate-spin" />
+                <span>Loading products...</span>
+              </div>
+            </div>
+          )}
+
           <table className="w-full text-left text-sm text-gray-600">
             <thead className="bg-gray-50 text-[11px] uppercase tracking-wider text-gray-500 border-b border-gray-100">
               <tr>
-                <th className="py-3 px-5 font-semibold">Product</th>
-                <th className="py-3 px-5 font-semibold">Model No</th>
+                <th className="py-3 px-5 font-semibold">Model / Product</th>
                 <th className="py-3 px-5 font-semibold">Brand</th>
                 <th className="py-3 px-5 font-semibold">Category Path</th>
-                <th className="py-3 px-5 font-semibold">Specs</th>
+                <th className="py-3 px-5 font-semibold">Technical Specs</th>
                 <th className="py-3 px-5 font-semibold text-right">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {filteredProducts.length === 0 ? (
+              {products.length === 0 && !loadingProducts ? (
                 <tr>
-                  <td colSpan="6" className="py-12 text-center text-gray-400 text-sm">
-                    No products added yet. Click &ldquo;+ Add Product&rdquo; to add your first product.
+                  <td colSpan="5" className="py-12 text-center text-gray-400 text-sm">
+                    {hasActiveFilters
+                      ? "No products found matching your active filters. Try resetting filters."
+                      : "No products added yet. Click '+ Add Product' to start building your catalog."}
                   </td>
                 </tr>
               ) : (
-                filteredProducts.map((p) => (
+                products.map((p) => (
                   <tr key={p.id} className="hover:bg-gray-50/70 transition">
-                    {/* Thumbnail + Name */}
+                    {/* Thumbnail + Model No (Main) */}
                     <td className="py-3.5 px-5">
                       <div className="flex items-center gap-3">
                         <div className="w-12 h-12 rounded-lg bg-gray-100 border border-gray-200 overflow-hidden flex items-center justify-center flex-shrink-0">
                           {p.image_url ? (
                             <img
                               src={p.image_url}
-                              alt={p.name}
+                              alt={p.model_no || p.name}
                               className="max-w-full max-h-full object-contain"
                               onError={(e) => {
                                 e.currentTarget.style.display = "none";
@@ -247,22 +478,19 @@ export default function AdminDashboardPage() {
                           <Link
                             href={`/products/${p.id}`}
                             target="_blank"
-                            className="font-semibold text-gray-900 hover:text-[#04940B] transition line-clamp-1 text-sm"
+                            className="font-bold text-[#04940B] hover:underline transition text-sm flex items-center gap-1"
                             title="Preview on Storefront"
                           >
-                            {p.name} ↗
+                            <span>{p.model_no || p.name}</span>
+                            <span className="text-[10px] opacity-75">↗</span>
                           </Link>
                           {p.is_featured && (
-                            <span className="text-[10px] bg-amber-50 text-amber-700 font-semibold px-2 py-0.5 rounded-full border border-amber-200">
+                            <span className="text-[10px] bg-amber-50 text-amber-700 font-semibold px-2 py-0.5 rounded-full border border-amber-200 mt-0.5 inline-block">
                               ★ Featured
                             </span>
                           )}
                         </div>
                       </div>
-                    </td>
-
-                    <td className="py-3.5 px-5 font-bold text-[#04940B]">
-                      {p.model_no}
                     </td>
 
                     <td className="py-3.5 px-5 text-gray-700 font-medium">
@@ -277,15 +505,15 @@ export default function AdminDashboardPage() {
 
                     <td className="py-3.5 px-5 text-xs text-gray-500">
                       {p.specifications && p.specifications.length > 0 ? (
-                        <div className="space-y-0.5">
+                        <div className="space-y-0.5 max-w-[280px]">
                           {p.specifications.slice(0, 2).map((s, i) => (
-                            <div key={i}>
+                            <div key={i} className="truncate">
                               <span className="font-medium text-gray-700">{s.spec_key}:</span> {s.spec_value}
                             </div>
                           ))}
                           {p.specifications.length > 2 && (
                             <span className="text-[10px] text-gray-400">
-                              +{p.specifications.length - 2} more
+                              +{p.specifications.length - 2} more specs
                             </span>
                           )}
                         </div>
@@ -309,9 +537,9 @@ export default function AdminDashboardPage() {
                         Edit
                       </Link>
                       <button
-                        onClick={() => handleDelete(p.id, p.model_no)}
+                        onClick={() => handleDelete(p.id, p.model_no || p.name)}
                         disabled={deletingId === p.id}
-                        className="text-xs text-red-600 hover:text-red-800 font-semibold px-2.5 py-1 rounded-md hover:bg-red-50 transition"
+                        className="text-xs text-red-600 hover:text-red-800 font-semibold px-2.5 py-1 rounded-md hover:bg-red-50 transition cursor-pointer"
                       >
                         {deletingId === p.id ? "Deleting..." : "Delete"}
                       </button>
@@ -322,6 +550,54 @@ export default function AdminDashboardPage() {
             </tbody>
           </table>
         </div>
+
+        {/* Pagination Bar */}
+        {totalPages > 1 && (
+          <div className="p-4 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-3 bg-gray-50/50">
+            <span className="text-xs text-gray-500">
+              Page <strong className="text-gray-800">{page}</strong> of{" "}
+              <strong className="text-gray-800">{totalPages}</strong>
+            </span>
+
+            <div className="flex items-center gap-1.5">
+              {/* Previous Button */}
+              <button
+                type="button"
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                disabled={page <= 1}
+                className="px-3 py-1.5 rounded-lg border border-gray-200 text-xs font-semibold text-gray-700 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition"
+              >
+                ← Previous
+              </button>
+
+              {/* Page Number Buttons */}
+              {getPageNumbers().map((pNum) => (
+                <button
+                  key={pNum}
+                  type="button"
+                  onClick={() => setPage(pNum)}
+                  className={`w-8 h-8 rounded-lg text-xs font-bold transition cursor-pointer ${
+                    page === pNum
+                      ? "bg-[#04940B] text-white shadow-xs"
+                      : "bg-white border border-gray-200 text-gray-700 hover:bg-gray-100"
+                  }`}
+                >
+                  {pNum}
+                </button>
+              ))}
+
+              {/* Next Button */}
+              <button
+                type="button"
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                disabled={page >= totalPages}
+                className="px-3 py-1.5 rounded-lg border border-gray-200 text-xs font-semibold text-gray-700 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition"
+              >
+                Next →
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
