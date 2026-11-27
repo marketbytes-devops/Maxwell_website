@@ -181,10 +181,10 @@ export default function AddProductPage() {
       const next = [...prev];
       const current = next[pIdx];
 
-      const newModelNo = current.model_no || data.model_no || "";
-      const newName = current.name || data.name || (newModelNo ? `${newModelNo}` : "");
-      const newDesc = current.description || data.description || "";
-      const newTags = current.tags || data.tags || "";
+      const newModelNo = data.model_no || current.model_no || "";
+      const newName = data.name || current.name || newModelNo || "";
+      const newDesc = data.description !== undefined ? data.description : (current.description || "");
+      const newTags = data.tags || current.tags || "";
 
       let mergedSpecs = [];
       if (data.specs && Array.isArray(data.specs) && data.specs.length > 0) {
@@ -417,7 +417,7 @@ export default function AddProductPage() {
           brand: brandObj?.name || "Maxsel",
           category_id: activeSelectedCategory.id,
           category_name: activeSelectedCategory.name,
-          description: p.description.trim(),
+          description: (p.description || "").trim(),
           tags: p.tags.trim(),
           image_url: primaryImg,
           images: p.uploadedImages.map((img, idx) => ({
@@ -672,16 +672,48 @@ export default function AddProductPage() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-xs font-semibold text-gray-700 mb-1.5">
+                        Product Title / Name
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Prodigy – Convex or Western 300L Freezer (Optional)"
+                        value={product.name}
+                        onChange={(e) => updateProductField(pIdx, "name", e.target.value)}
+                        className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#04940B]"
+                      />
+                      <p className="text-[11px] text-gray-400 mt-1">
+                        If left blank, will automatically use the Model Number.
+                      </p>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-700 mb-1.5">
                         Model Number <span className="text-red-500">*</span>
                       </label>
                       <input
                         type="text"
                         required
-                        placeholder="e.g. F450GL23, BB-3D-GLS"
+                        placeholder="e.g. Prodigy – Convex, F450GL23, BB-3D-GLS"
                         value={product.model_no}
                         onChange={(e) => updateProductField(pIdx, "model_no", e.target.value)}
                         className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#04940B]"
                       />
+                    </div>
+
+                    <div className="sm:col-span-2">
+                      <label className="block text-xs font-semibold text-gray-700 mb-1.5">
+                        Product Description (Optional)
+                      </label>
+                      <textarea
+                        rows={3}
+                        placeholder="Commercial overview, features, modularity, applications (e.g. for Trufrost / Butler products)..."
+                        value={product.description}
+                        onChange={(e) => updateProductField(pIdx, "description", e.target.value)}
+                        className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#04940B]"
+                      />
+                      <p className="text-[11px] text-gray-400 mt-1">
+                        Leave empty if product only has technical specifications (like Western / Hoshizaki).
+                      </p>
                     </div>
 
                     <div>
@@ -690,14 +722,14 @@ export default function AddProductPage() {
                       </label>
                       <input
                         type="text"
-                        placeholder="e.g. Freezers, Glass Top"
+                        placeholder="e.g. Freezers, Glass Top, Convection Oven"
                         value={product.tags}
                         onChange={(e) => updateProductField(pIdx, "tags", e.target.value)}
                         className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#04940B]"
                       />
                     </div>
 
-                    <div className="sm:col-span-2">
+                    <div>
                       <label className="block text-xs font-semibold text-gray-700 mb-1.5 flex items-center justify-between">
                         <span>Brochure PDF URL</span>
                         <label className="text-[11px] text-[#04940B] hover:underline cursor-pointer font-medium">
@@ -729,7 +761,7 @@ export default function AddProductPage() {
                         placeholder="e.g. /brochures/spec_sheet.pdf or click Upload PDF"
                         value={product.brochure_url}
                         onChange={(e) => updateProductField(pIdx, "brochure_url", e.target.value)}
-                        className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#04940B]"
+                        className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#04940B]"
                       />
                     </div>
                   </div>

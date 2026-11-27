@@ -68,9 +68,10 @@ export default function EditProductPage() {
           setBrands(bData.brands || []);
         }
 
-        // Fill basic fields
-        setModelNo(prod.model_no || "");
-        setProductName(prod.name || "");
+        // Fill basic fields (prioritize model_no, fallback to name)
+        const initialModel = prod.model_no || prod.name || "";
+        setModelNo(initialModel);
+        setProductName(initialModel);
         setDescription(prod.description || "");
         setTags(prod.tags || "");
         setBrochureUrl(prod.brochure_url || "");
@@ -278,9 +279,9 @@ export default function EditProductPage() {
 
   // AI Spec Sheet Extractor Handler
   const handleApplyExtractedSpecs = (data) => {
-    if (data.model_no && !modelNo) setModelNo(data.model_no);
+    if (data.model_no) setModelNo(data.model_no);
     if (data.name) setProductName(data.name);
-    if (data.description) setDescription(data.description);
+    if (data.description !== undefined) setDescription(data.description);
     if (data.tags) setTags(data.tags);
     if (data.specs && Array.isArray(data.specs) && data.specs.length > 0) {
       setSpecs(data.specs.map((s) => ({ key: s.key || "", value: s.value || "" })));
@@ -319,7 +320,7 @@ export default function EditProductPage() {
         brand: brandObj?.name || "Maxsel",
         category_id: activeSelectedCategory.id,
         category_name: activeSelectedCategory.name,
-        description: description.trim(),
+        description: (description || "").trim(),
         tags: tags.trim(),
         image_url: primaryImg,
         images: uploadedImages.map((img, idx) => ({
@@ -629,15 +630,48 @@ export default function EditProductPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-semibold text-gray-700 mb-1.5">
+                Product Title / Name
+              </label>
+              <input
+                type="text"
+                placeholder="e.g. Prodigy – Convex or Western 300L Freezer (Optional)"
+                value={productName}
+                onChange={(e) => setProductName(e.target.value)}
+                className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#04940B]"
+              />
+              <p className="text-[11px] text-gray-400 mt-1">
+                If left blank, will automatically use the Model Number.
+              </p>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-gray-700 mb-1.5">
                 Model Number <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
                 required
+                placeholder="e.g. Prodigy – Convex, F450GL23, BB-3D-GLS"
                 value={modelNo}
                 onChange={(e) => setModelNo(e.target.value)}
                 className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#04940B]"
               />
+            </div>
+
+            <div className="sm:col-span-2">
+              <label className="block text-xs font-semibold text-gray-700 mb-1.5">
+                Product Description (Optional)
+              </label>
+              <textarea
+                rows={3}
+                placeholder="Commercial overview, features, modularity, applications (e.g. for Trufrost / Butler products)..."
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#04940B]"
+              />
+              <p className="text-[11px] text-gray-400 mt-1">
+                Leave empty if product only has technical specifications (like Western / Hoshizaki).
+              </p>
             </div>
 
             <div>
@@ -646,6 +680,7 @@ export default function EditProductPage() {
               </label>
               <input
                 type="text"
+                placeholder="e.g. Freezers, Glass Top, Convection Oven"
                 value={tags}
                 onChange={(e) => setTags(e.target.value)}
                 className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#04940B]"

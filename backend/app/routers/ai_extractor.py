@@ -13,23 +13,26 @@ from app.config import ROOT_DIR
 router = APIRouter(prefix="/api/admin", tags=["admin-ai-extractor"])
 
 EXTRACTION_SYSTEM_PROMPT = """You are an expert commercial kitchen, bakery, refrigeration, and foodservice equipment catalog specialist.
-Analyze this specification sheet / technical table image.
+Analyze this specification sheet / technical table / brochure image.
 
 Extract all equipment details into strict, valid JSON with this exact structure:
 {
-  "model_no": "Primary or first model number detected (e.g. WHF300, F450GL, BB-3D-GLS)",
-  "name": "Professional product title/name (e.g. Western 300L Hard Top Deep Freezer)",
-  "description": "Concise 1-2 sentence commercial overview describing the equipment type and intended use",
-  "tags": "Comma-separated keywords (e.g. Deep Freezer, Hard Top, Commercial Kitchen, R290)",
+  "model_no": "Primary model number/identifier detected (e.g. Prodigy – Convex, Prodigy – Pro, F450GL23, BB-3D-GLS)",
+  "name": "Product title/name (e.g. Prodigy – Convex, Prodigy – Pro, Western 300L Hard Top Deep Freezer)",
+  "description": "If the sheet contains marketing copy, an introductory overview, category subtitle (e.g. 'Modular Electric Convection Ovens', 'Modular Proofing Cabinets'), or descriptive paragraphs explaining construction, features, and applications, extract the complete text here as formatted paragraphs. If the sheet is strictly a technical spec table with NO description paragraphs (like Western or Hoshizaki spec tables), return an empty string \"\". Do NOT hallucinate marketing text if absent.",
+  "tags": "Comma-separated keywords (e.g. Convection Oven, Proofing Cabinet, Bakery Equipment, Stainless Steel)",
   "specs": [
-    { "key": "External Dimension (mm)", "value": "1100 x 680 x 850" },
-    { "key": "Gross Volume", "value": "300 Litres" },
-    { "key": "Temperature Range", "value": "-18°C to -24°C" }
+    { "key": "Power", "value": "6.0 kW" },
+    { "key": "Dimensions (W x D x H)", "value": "840 x 849 x 789 mm" },
+    { "key": "Cavity Dimensions (W x D x H)", "value": "663 x 481 x 584 mm" },
+    { "key": "Weight", "value": "91.0 kgs." },
+    { "key": "Electricals", "value": "3-380V / 50Hz" }
   ],
   "all_models": [
     {
-      "model_no": "Model name/number if multiple models appear in table columns",
-      "name": "Suggested product title for this model",
+      "model_no": "Model name/number if multiple models appear in table columns (e.g. Prodigy – Convex, Prodigy – Deck)",
+      "name": "Product title for this model",
+      "description": "Description if model-specific",
       "specs": [
         { "key": "Parameter name", "value": "Value with unit" }
       ]
@@ -38,21 +41,19 @@ Extract all equipment details into strict, valid JSON with this exact structure:
 }
 
 Extraction Guidelines:
-1. Normalize standard specification keys where possible:
-   - Dimensions, WxDxH, Size (mm) -> "External Dimension (mm)"
-   - Gross Volume, Capacity, Volume (L) -> "Gross Volume"
-   - Temperature Range, Operating Temp -> "Temperature Range"
-   - Shelves, Baskets -> "No. of Shelves / Baskets"
-   - Power Supply, Voltage, Electrical Rating -> "Power Supply / Voltage"
-   - Refrigerant, Gas -> "Refrigerant"
-   - Power Consumption, Energy -> "Power Consumption"
-   - Insulation, Thickness -> "Insulation Thickness"
-   - Net Weight, Weight -> "Net Weight"
-2. Keep all other technical rows detected in the table (e.g. Defrost Type, Door Type, Lock, Wheels/Castors).
-3. If the image shows a multi-column table with multiple models (e.g. Model A, Model B, Model C side-by-side):
-   - Put every detected model in the `all_models` list with its corresponding column values.
-   - Set the root `model_no` and `specs` to the first model in the table.
-4. Return pure, valid JSON ONLY without any markdown code fences or conversational text.
+1. Model & Name:
+   - Look for the product headline or 'Model :' field (e.g. 'Prodigy – Convex', 'Prodigy – Pro').
+   - If both a product family title ('Prodigy – Convex') and subtitle ('Modular Electric Convection Ovens') are present, set `name` to the product title ('Prodigy – Convex') and include the subtitle and full body text in `description`.
+   - If the image only has a model code in a table (e.g. 'F450GL23'), set both `model_no` and `name` to that code.
+2. Description:
+   - Extract the full textual narrative from the sheet if present (e.g. overview, key highlights, suitability for bakeries/cafes/restaurants).
+   - If there is NO descriptive text (only tabular data), leave `description` as empty string `""`.
+3. Specifications / Key Features:
+   - Extract every key feature and specification row (e.g. Power, Weight, Dimensions (W x D x H), Cavity Dimensions (W x D x H), Electricals, Temperature, Trays, Gross Volume, Temperature Range, etc.).
+   - Keep key names clean and natural as they appear on the sheet.
+4. Multi-model tables:
+   - If the image contains multiple models (e.g. multiple columns or side-by-side models), list each model in `all_models` with its specific specs.
+5. Return pure, valid JSON ONLY without any markdown code fences or conversational text.
 """
 
 
@@ -150,41 +151,74 @@ async def extract_specs_from_image(
 
     image_bytes = await file.read()
     if not image_bytes:
-        raise HTTPException(status_code=400, detail="Uploaded file is empty.")
+        return {"success": False, "error": "Uploaded file is empty."}
 
     try:
         image = Image.open(io.BytesIO(image_bytes))
         # Convert RGBA to RGB for standard processing if needed
         if image.mode in ("RGBA", "LA", "P"):
             image = image.convert("RGB")
+
+        # Downsample high-res images to max 1600px dimension
+        # Keeps OCR crisp while reducing payload from 5-10MB to <300KB and speeding up by 5x-10x
+        MAX_DIM = 1600
+        if max(image.width, image.height) > MAX_DIM:
+            image.thumbnail((MAX_DIM, MAX_DIM), Image.Resampling.LANCZOS)
     except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Invalid image format: {e}")
+        return {"success": False, "error": f"Invalid image format: {e}"}
 
     try:
-        from google import genai
+        try:
+            from google import genai
+        except ImportError:
+            return {
+                "success": False,
+                "error": "The google-genai library is not installed in the backend environment. Please run: docker compose up -d --build backend",
+            }
+
         client = genai.Client(api_key=api_key)
 
-        # Call Gemini multimodal model with fallback for high availability
-        candidate_models = ["gemini-3.5-flash-lite", "gemini-3.5-flash", "gemini-3.8-flash"]
+        # Call Gemini multimodal model with fast, high-availability candidates
+        candidate_models = ["gemini-3.5-flash-lite", "gemini-3.5-flash", "gemini-2.5-flash-lite"]
         response = None
         last_err = None
         for m_name in candidate_models:
-            try:
-                response = client.models.generate_content(
-                    model=m_name,
-                    contents=[image, EXTRACTION_SYSTEM_PROMPT],
-                )
-                if response and response.text:
+            for attempt in range(2):
+                try:
+                    response = client.models.generate_content(
+                        model=m_name,
+                        contents=[image, EXTRACTION_SYSTEM_PROMPT],
+                    )
+                    if response and response.text:
+                        break
+                except Exception as e:
+                    last_err = e
+                    err_str = str(e)
+                    # If 429 rate limit or 503 high demand, short pause before next attempt
+                    if ("429" in err_str or "503" in err_str or "UNAVAILABLE" in err_str) and attempt == 0:
+                        import time
+                        time.sleep(1.5)
+                        continue
                     break
-            except Exception as e:
-                last_err = e
-                continue
+            if response and response.text:
+                break
 
         if not response or not response.text:
-            raise HTTPException(
-                status_code=500,
-                detail=f"Gemini API returned an error: {last_err or 'Empty response'}"
-            )
+            err_str = str(last_err or "")
+            if "RESOURCE_EXHAUSTED" in err_str or "429" in err_str:
+                return {
+                    "success": False,
+                    "error": "Gemini API rate limit reached (requests per minute limit). Please wait 20 seconds and click scan again.",
+                }
+            if "503" in err_str or "UNAVAILABLE" in err_str or "high demand" in err_str.lower():
+                return {
+                    "success": False,
+                    "error": "Google Gemini servers are momentarily experiencing high traffic. Please wait 10 seconds and try again.",
+                }
+            return {
+                "success": False,
+                "error": f"AI extraction error: {err_str or 'No response received from Gemini'}",
+            }
 
         raw_text = (response.text or "").strip()
         # Clean any accidental markdown code fences

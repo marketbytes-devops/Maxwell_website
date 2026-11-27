@@ -2,6 +2,52 @@
 
 import { useState, useRef, useEffect } from "react";
 
+// Client-side image compression helper to avoid large uploads and proxy timeouts
+async function compressImageIfNeeded(file, maxDim = 1600, quality = 0.85) {
+  if (!file || !file.type.startsWith("image/")) return file;
+  if (file.size < 500 * 1024) return file; // Skip already small images
+
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        let width = img.width;
+        let height = img.height;
+        if (width > maxDim || height > maxDim) {
+          if (width > height) {
+            height = Math.round((height * maxDim) / width);
+            width = maxDim;
+          } else {
+            width = Math.round((width * maxDim) / height);
+            height = maxDim;
+          }
+        }
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0, width, height);
+        canvas.toBlob(
+          (blob) => {
+            if (blob && blob.size < file.size) {
+              resolve(new File([blob], file.name.replace(/\.[^.]+$/, ".jpg"), { type: "image/jpeg" }));
+            } else {
+              resolve(file);
+            }
+          },
+          "image/jpeg",
+          quality
+        );
+      };
+      img.onerror = () => resolve(file);
+      img.src = e.target.result;
+    };
+    reader.onerror = () => resolve(file);
+    reader.readAsDataURL(file);
+  });
+}
+
 /**
  * AiSpecScanner
  * Allows admins to upload, paste, or drag & drop a specification sheet image.
@@ -110,8 +156,11 @@ export default function AiSpecScanner({
     setSuccessMsg("");
 
     try {
+      // Compress image client-side if large to prevent upload delays or proxy errors
+      const optimizedFile = await compressImageIfNeeded(targetFile);
+
       const formData = new FormData();
-      formData.append("file", targetFile);
+      formData.append("file", optimizedFile);
       if (currentModelNo) {
         formData.append("model_no", currentModelNo);
       }
@@ -142,7 +191,14 @@ export default function AiSpecScanner({
           setShowKeyModal(true);
           throw new Error("Gemini API key is required to scan specification images.");
         }
-        throw new Error(result.detail || "Failed to scan specification sheet.");
+        throw new Error(result.error || result.detail || "Failed to scan specification sheet.");
+      }
+
+      if (!result.success) {
+        if (result.requires_key) {
+          setShowKeyModal(true);
+        }
+        throw new Error(result.error || "Failed to scan specification sheet.");
       }
 
       const data = result.data;

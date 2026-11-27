@@ -17,6 +17,7 @@ services:
       - ADMIN_PASSWORD=${ADMIN_PASSWORD:-admin123}
       - JWT_SECRET=${JWT_SECRET:-maxsel_super_secret_jwt_key_2026_secure}
       - UPLOADS_DIR=/app/uploads
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
     volumes:
       - ./backend/uploads:/app/uploads
     ports:

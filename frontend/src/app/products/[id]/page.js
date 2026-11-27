@@ -144,7 +144,7 @@ export default function ProductDetailPage({ params }) {
             </>
           )}
           <span>/</span>
-          <span className="text-gray-900 font-medium">{product.model_no || product.name}</span>
+          <span className="text-gray-900 font-medium">{product.name || product.model_no}</span>
         </nav>
       </div>
 
@@ -200,20 +200,38 @@ export default function ProductDetailPage({ params }) {
           {/* RIGHT COLUMN: MODEL TITLE, SPECIFICATIONS, ENQUIRY CTA   */}
           {/* ========================================================= */}
           <div className="lg:col-span-6 flex flex-col justify-start">
-            {/* Product Model Heading (e.g. F450GL23) */}
+            {/* Product Heading */}
             <h1
-              className="text-3xl sm:text-4xl lg:text-[42px] font-bold text-[#1F2937] tracking-tight leading-tight mb-4"
+              className="text-3xl sm:text-4xl lg:text-[40px] font-bold text-[#1F2937] tracking-tight leading-tight mb-2"
               style={{ fontFamily: "'Roboto', sans-serif" }}
             >
-              {product.model_no || product.name}
+              {product.name || product.model_no}
             </h1>
 
-            {/* Subheading: Product Specification */}
+            {/* Model Number Badge if distinct from Title */}
+            {product.model_no && product.name && product.model_no.toLowerCase() !== product.name.toLowerCase() && (
+              <div className="mb-4">
+                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-700 font-mono">
+                  Model: {product.model_no}
+                </span>
+              </div>
+            )}
+
+            {/* Product Description - Rendered when present (e.g. for Trufrost / Butler) */}
+            {product.description && product.description.trim() && (
+              <div className="mb-6 pt-1 pb-4 border-b border-gray-100">
+                <p className="text-sm sm:text-[15px] text-gray-600 leading-relaxed font-roboto whitespace-pre-line">
+                  {product.description}
+                </p>
+              </div>
+            )}
+
+            {/* Subheading: Key Features & Specifications */}
             <h2
-              className="text-lg sm:text-[20px] font-medium text-[#4B5563] mb-4"
+              className="text-lg sm:text-[20px] font-semibold text-[#1F2937] mb-4"
               style={{ fontFamily: "'Roboto', sans-serif" }}
             >
-              Product Specification:
+              Key Features &amp; Specifications:
             </h2>
 
             {/* Specifications List (Exact Bullet Layout from Reference Image) */}
@@ -363,7 +381,7 @@ export default function ProductDetailPage({ params }) {
                 <h3 className="text-xl font-bold text-gray-900">Enquiry Received!</h3>
                 <p className="text-sm text-gray-600">
                   Thank you! Our sales team will get in touch with pricing and availability for{" "}
-                  <span className="font-semibold text-gray-900">{product.model_no || product.name}</span> shortly.
+                  <span className="font-semibold text-gray-900">{product.name || product.model_no}</span> shortly.
                 </p>
               </div>
             ) : (
@@ -373,7 +391,7 @@ export default function ProductDetailPage({ params }) {
                     Direct Equipment Enquiry
                   </span>
                   <h3 className="text-2xl font-bold text-gray-900">
-                    Enquire for {product.model_no || product.name}
+                    Enquire for {product.name || product.model_no}
                   </h3>
                   <p className="text-xs text-gray-500 mt-1">
                     Fill in your details below and our commercial sales consultant will contact you.

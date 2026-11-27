@@ -682,7 +682,7 @@ export default function ProductsPage() {
                                   <div className="flex-1 min-w-0">
                                     <div className="flex items-center gap-1.5">
                                       <p className="text-xs sm:text-sm font-bold text-gray-900 truncate group-hover:text-[#04940B] transition-colors">
-                                        {p.model_no || p.name}
+                                        {p.name || p.model_no}
                                       </p>
                                     </div>
                                     <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
@@ -890,41 +890,54 @@ export default function ProductsPage() {
                         className="block cursor-pointer group"
                       >
                         <h3
-                          className="font-bold text-[22px] text-[#323334] group-hover:text-[#04940B] transition-colors leading-[100%] line-clamp-1"
+                          className="font-bold text-[20px] sm:text-[22px] text-[#323334] group-hover:text-[#04940B] transition-colors leading-[120%] line-clamp-1"
                           style={{ fontFamily: "'Roboto', sans-serif" }}
+                          title={product.name || product.model_no}
                         >
-                          {product.model_no || product.name}
+                          {product.name || product.model_no}
                         </h3>
-                        {product.brand && (
+                        {product.model_no && product.name && product.model_no.toLowerCase() !== product.name.toLowerCase() ? (
+                          <div className="flex items-center gap-2 mt-1">
+                            <span className="text-[11px] font-mono font-medium text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded">
+                              {product.model_no}
+                            </span>
+                            {product.brand && (
+                              <span className="text-xs text-gray-400 font-medium uppercase tracking-wider">
+                                {product.brand}
+                              </span>
+                            )}
+                          </div>
+                        ) : product.brand ? (
                           <span className="text-xs text-gray-400 font-medium uppercase tracking-wider block mt-1">
                             {product.brand}
                           </span>
-                        )}
+                        ) : null}
                       </Link>
 
                       {/* Action Buttons: Add to Cart + Request a Quote */}
-                      <div className="w-full flex items-center gap-[7px]">
+                      <div className="w-full grid grid-cols-2 gap-2">
                         <button
                           type="button"
                           onClick={() => addToCart(product, 1)}
-                          className="w-[165px] h-[40px] rounded-[60px] bg-[#04940B] hover:bg-[#037A09] active:scale-[0.98] transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
+                          className="w-full h-[40px] px-2 rounded-[60px] bg-[#04940B] hover:bg-[#037A09] active:scale-[0.98] transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
                         >
                           <svg
-                            width="16"
-                            height="16"
+                            width="15"
+                            height="15"
                             viewBox="0 0 24 24"
                             fill="none"
                             stroke="#FFFFFF"
                             strokeWidth="2.2"
                             strokeLinecap="round"
                             strokeLinejoin="round"
+                            className="flex-shrink-0"
                           >
                             <circle cx="9" cy="21" r="1"></circle>
                             <circle cx="20" cy="21" r="1"></circle>
                             <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
                           </svg>
                           <span
-                            className="text-[#FFFFFF] text-[13px] font-medium leading-none"
+                            className="text-[#FFFFFF] text-[12px] sm:text-[13px] font-medium leading-none whitespace-nowrap"
                             style={{ fontFamily: "'Poppins', sans-serif" }}
                           >
                             Add to Cart
@@ -933,10 +946,10 @@ export default function ProductsPage() {
 
                         <Link
                           href={`/products/${product.id}`}
-                          className="flex-1 h-[40px] rounded-[60px] border border-[#04940B] text-[#04940B] hover:bg-[#04940B]/5 active:scale-[0.98] transition-all flex items-center justify-center cursor-pointer shadow-xs"
+                          className="w-full h-[40px] px-2 rounded-[60px] border border-[#04940B] text-[#04940B] hover:bg-[#04940B]/5 active:scale-[0.98] transition-all flex items-center justify-center cursor-pointer shadow-xs"
                         >
                           <span
-                            className="text-[13px] font-medium leading-none whitespace-nowrap"
+                            className="text-[12px] sm:text-[13px] font-medium leading-none whitespace-nowrap"
                             style={{ fontFamily: "'Poppins', sans-serif" }}
                           >
                             Request a Quote
